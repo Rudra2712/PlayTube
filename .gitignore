@@ -1,0 +1,36 @@
+# === Global Ignores ===
+# Ignore environment variables, which should not be committed to a repository.
+# `git add` and `git commit` will not track this file.
+.env
+.env.local
+
+# Ignore OS-specific files that clutter a project's repository.
+.DS_Store # macOS
+Thumbs.db # Windows
+
+# Ignore editor-specific files and folders.
+# Visual Studio Code
+.vscode/
+
+# Ignore log files
+npm-debug.log*
+yarn-debug.log*
+
+# === Backend (Node/Express) Ignores ===
+# Ignore the dependencies folder.
+# Dependencies are managed by `package.json` and are restored with `npm install`.
+Youtube_Project/node_modules/
+
+# Ignore compiled/transpiled JavaScript output.
+# You might have a `dist` or `build` folder inside your backend if you use TypeScript.
+# The `/` at the end ensures only directories with this name are ignored.
+Youtube_Project/dist/
+Youtube_Project/build/
+
+# === Frontend (React) Ignores ===
+# Ignore the dependencies folder for the React application.
+Frontend/node_modules/
+
+# Ignore the build output folder created by `npm run build` or `yarn build`.
+# You do not need to commit the compiled production files.
+Frontend/build/

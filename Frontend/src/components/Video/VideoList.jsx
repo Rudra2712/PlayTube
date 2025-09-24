@@ -45,11 +45,13 @@ const VideoList = ({ video }) => {
           </p>
           <div className="flex items-center gap-x-4">
             <div className="mt-2 hidden h-10 w-10 shrink-0 md:block">
-              <img
-                src={video.owner?.avatar || "/default-avatar.png"}
-                alt={video.owner?.username}
-                className="h-full w-full rounded-full"
-              />
+              <Link to={`/user/${video.owner?.username}/videos`}>
+                <img
+                  src={video.owner?.avatar || "/default-avatar.png"}
+                  alt={video.owner?.username}
+                  className="h-full w-full rounded-full"
+                />
+              </Link>
             </div>
             <p className="text-sm text-gray-200">{video.owner?.username}</p>
           </div>

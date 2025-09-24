@@ -14,7 +14,7 @@ export const toggleSubscription = createAsyncThunk(
   "subscription/toggleSubscription",
   async (channelId) => {
     try {
-      const response = await axiosInstance.patch(`/subscription/${channelId}`);
+      const response = await axiosInstance.post(`/subscriptions/c/${channelId}`);
       toast.success(response.data.message);
       return response.data.data;
     } catch (error) {
@@ -26,9 +26,11 @@ export const toggleSubscription = createAsyncThunk(
 
 export const getChannelSubscribers = createAsyncThunk(
   "subscription/getChannelSubscribers",
-  async (channelId) => {
+  async (subscriberId) => {
     try {
-      const response = await axiosInstance.get(`/subscription/${channelId}`);
+      const response = await axiosInstance.get(
+        `/subscriptions/u/${subscriberId}`
+      );
       toast.success(response.data.message);
       return response.data.data;
     } catch (error) {
@@ -40,9 +42,9 @@ export const getChannelSubscribers = createAsyncThunk(
 
 export const getSubscribedChannels = createAsyncThunk(
   "subscription/getSubscribedChannels",
-  async (subscriberId) => {
+  async (channelId) => {
     try {
-      const response = await axiosInstance.get(`/subscription/users/${subscriberId}`);
+      const response = await axiosInstance.get(`/subscriptions/c/${channelId}`);
       toast.success(response.data.message);
       return response.data.data;
     } catch (error) {

@@ -41,7 +41,7 @@ function MyChannelEmptyTweet() {
               ></path>
             </svg>
           </button>
-          <button className="bg-[#ae7aff] px-3 py-2 font-semibold text-black">Send</button>
+          <button className="bg-[#ae7aff] px-3 py-2 font-semibold text-black">Sends</button>
         </div>
       </div>
       <div className="flex justify-center p-4">

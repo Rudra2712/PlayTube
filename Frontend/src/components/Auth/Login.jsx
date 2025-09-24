@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
 import { login } from "../../app/Slices/authSlice.js";
 import { Logo, Input, Button } from "../index.js";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function Login() {
   const dispatch = useDispatch();
@@ -25,27 +25,18 @@ function Login() {
     <div className="h-screen w-full overflow-y-auto bg-[#121212] text-white">
       <div className="mx-auto my-8 flex w-full max-w-sm flex-col px-4">
         <div className="mx-auto inline-block w-16">
-          <Logo />
+          <Link to={"/"}>
+            <Logo />
+          </Link>
         </div>
-        <div className="mb-6 w-full text-center text-2xl font-semibold uppercase">Play</div>
+        <div className="mb-6 w-full text-center text-2xl font-semibold uppercase">
+          Play
+        </div>
         <form
           onSubmit={handleSubmit(handleLogin)}
           className="mx-auto my-8 flex w-full max-w-sm flex-col px-4"
         >
-          {/* <Input
-            label="Email"
-            type="email"
-            required
-            placeholder="Enter your email"
-            {...register("email", {
-              required: true,
-              validate: {
-                matchPatern: (value) =>
-                  /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(value) ||
-                  "Email address must be a valid address",
-              },
-            })}
-          /> */}
+
           <Input
             label="Username"
             required

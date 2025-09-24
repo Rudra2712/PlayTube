@@ -141,14 +141,16 @@ function History() {
 
                     <div className="flex items-center gap-x-4">
                       <div className="mt-2 hidden h-10 w-10 shrink-0 md:block">
-                        <img
-                          src={video.owner?.avatar || "/default-avatar.png"}
-                          alt={video.owner?.username || "User avatar"}
-                          className="h-full w-full rounded-full"
-                          onError={(e) => {
-                            e.target.src = "/default-avatar.png";
-                          }}
-                        />
+                        <Link to={`/user/${video.owner?.username}/videos`}>
+                          <img
+                            src={video.owner?.avatar || "/default-avatar.png"}
+                            alt={video.owner?.username || "User avatar"}
+                            className="h-full w-full rounded-full"
+                            onError={(e) => {
+                              e.target.src = "/default-avatar.png";
+                            }}
+                          />
+                        </Link>
                       </div>
                       <p className="text-sm text-gray-200">
                         {video.owner?.username || "Unknown creator"}

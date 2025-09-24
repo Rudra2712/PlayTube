@@ -68,7 +68,7 @@ export const getAllVideos = createAsyncThunk(
       if (userId) url += `&userId=${userId}`;
       if (username) url += `&username=${username}`;
 
-      console.log("Fetching videos from:", url); // 🔍 Debug log
+      // console.log("Fetching videos from:", url); // 🔍 Debug log
 
       const response = await axiosInstance.get(url);
       return response.data.data; // 👈 your backend wraps videos in `data`

@@ -42,7 +42,7 @@ import MyChannel from "./pages/MyChannel.jsx";
 import History from "./pages/History.jsx";
 import LikedVideos from "./pages/LikedVideos.jsx";
 import Subscribers from "./pages/Subscribers.jsx";
-
+import AllTweets from "./pages/AllTweets.jsx";
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<App />}>
@@ -75,6 +75,7 @@ const router = createBrowserRouter(
           </Route>
           // Playlists
           <Route path="playlist/:playlistId" element={<PlaylistVideos />} />
+          <Route path="tweets" element={<AllTweets />} />
         </Route>
         //Video Watching
         <Route path="/video/:videoId" element={<VideoDetail />} />

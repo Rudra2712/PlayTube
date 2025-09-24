@@ -1,47 +1,67 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { getVideo, getAllVideos } from "../../app/Slices/videoSlice";
 import { addToHistory } from "../../app/Slices/historySlice.js";
+import { toggleVideoLike, getVideoLikeStatus, clearLikeStatus } from "../../app/Slices/likeSlice.js";
 import VideoList from "../Video/VideoList.jsx";
 import CommentsSection from "../Comment/CommentSection.jsx";
-import { Link } from "react-router-dom";
+
 const VideoDetail = () => {
   const { videoId } = useParams();
   const dispatch = useDispatch();
   const hasAddedToHistory = useRef(false);
 
   const { video, videos, loading, error } = useSelector((state) => state.video);
+  const { 
+    loading: likeLoading, 
+    likeStatus: { isLiked, likesCount, loading: likeStatusLoading } 
+  } = useSelector((state) => state.like);
 
-  // Add to history when video is loaded and ready to play
+  // Fetch video like status when video loads
+  useEffect(() => {
+    if (videoId) {
+      dispatch(getVideoLikeStatus(videoId));
+    }
+    
+    return () => {
+      // Clear like status when component unmounts or videoId changes
+      dispatch(clearLikeStatus());
+    };
+  }, [videoId, dispatch]);
+
+  // Add to history when video is loaded
   useEffect(() => {
     if (video?._id && !hasAddedToHistory.current) {
-      // console.log("Adding video to history:", video._id);
       dispatch(addToHistory(video._id));
       hasAddedToHistory.current = true;
     }
   }, [video?._id, dispatch]);
 
-  // Reset the history flag when videoId changes
+  // Reset history flag when videoId changes
   useEffect(() => {
     hasAddedToHistory.current = false;
   }, [videoId]);
 
-  // Fetch video data
+  // Fetch video and all suggestions
   useEffect(() => {
     if (videoId) {
       dispatch(getVideo(videoId));
-      dispatch(getAllVideos()); // fetch all for suggestions
+      dispatch(getAllVideos());
     }
   }, [videoId, dispatch]);
 
-  // Handle video play event to ensure it's added to history
+  // Handle play event
   const handleVideoPlay = () => {
     if (video?._id && !hasAddedToHistory.current) {
-      console.log("Video started playing, adding to history:", video._id);
       dispatch(addToHistory(video._id));
       hasAddedToHistory.current = true;
     }
+  };
+
+  const handleToggleLike = async () => {
+    if (!video?._id) return;
+    dispatch(toggleVideoLike(video._id));
   };
 
   if (loading) return <p>Loading...</p>;
@@ -67,9 +87,7 @@ const VideoDetail = () => {
               className="w-full max-h-[500px] rounded-lg"
               onPlay={handleVideoPlay}
               onLoadedData={() => {
-                // Alternative trigger point - when video is loaded and ready
                 if (video?._id && !hasAddedToHistory.current) {
-                  console.log("Video loaded, adding to history:", video._id);
                   dispatch(addToHistory(video._id));
                   hasAddedToHistory.current = true;
                 }
@@ -84,6 +102,7 @@ const VideoDetail = () => {
             </h1>
 
             <div className="flex items-center justify-between mb-4">
+              {/* Channel Info */}
               <div className="flex items-center gap-3">
                 <Link to={`/user/${video.owner?.username}/videos`}>
                   <img
@@ -102,10 +121,30 @@ const VideoDetail = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 text-sm text-gray-400">
+              {/* Views, Date & Like Button */}
+              <div className="flex items-center gap-6 text-sm text-gray-400">
                 <span>{video.views} views</span>
                 <span>•</span>
                 <span>{new Date(video.createdAt).toLocaleDateString()}</span>
+
+                {/* Like Button */}
+                <button
+                  onClick={handleToggleLike}
+                  disabled={likeLoading || likeStatusLoading}
+                  className={`px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition ${
+                    isLiked
+                      ? "bg-red-600 text-white"
+                      : "bg-gray-700 text-gray-200 hover:bg-gray-600"
+                  } ${(likeLoading || likeStatusLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {likeStatusLoading ? (
+                    "Loading..."
+                  ) : (
+                    <>
+                      {isLiked ? "❤️ Liked" : "🤍 Like"} {likesCount}
+                    </>
+                  )}
+                </button>
               </div>
             </div>
 

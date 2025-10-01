@@ -15,14 +15,14 @@ function ChannelVideos() {
       // viewing another user's channel
       dispatch(getAllVideos({ username }))
         .unwrap()
-        .then((res) => console.log("Fetched videos response:", res))
-        .catch((err) => console.error("Error fetching videos:", err));
+        // .then((res) => console.log("Fetched videos response:", res))
+        // .catch((err) => console.error("Error fetching videos:", err));
     } else if (loggedInUser?._id) {
       // viewing my own channel
       dispatch(getAllVideos({ userId: loggedInUser._id }))
         .unwrap()
-        .then((res) => console.log("Fetched videos response:", res))
-        .catch((err) => console.error("Error fetching videos:", err));
+        // .then((res) => console.log("Fetched videos response:", res))
+        // .catch((err) => console.error("Error fetching videos:", err));
     }
   }, [username, loggedInUser?._id, dispatch]);
 

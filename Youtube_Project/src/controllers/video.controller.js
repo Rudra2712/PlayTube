@@ -35,7 +35,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
   // If username is provided
   if (username && !userId) {
     const user = await User.findOne({
-      username: username.trim()
+      username: username.trim(),
     });
     if (!user) {
       return res.status(404).json(new ApiResponse(404, null, "User not found"));
@@ -159,7 +159,7 @@ const getVideoById = asyncHandler(async (req, res) => {
   // Populate owner with only required fields
   const video = await Video.findById(videoId).populate(
     "owner",
-    "username fullName avatar" // include only fields you need
+    "username fullName avatar", // include only fields you need
   );
 
   if (!video) {
@@ -170,7 +170,6 @@ const getVideoById = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, video, "Video fetched successfully"));
 });
-
 
 const updateVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
@@ -254,6 +253,30 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
     );
 });
 
+const incrementView = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+
+  // Validate videoId
+  if (!isValidObjectId(videoId)) {
+    throw new ApiError(400, "Invalid video ID");
+  }
+
+  // Increment view count
+  const video = await Video.findByIdAndUpdate(
+    videoId,
+    { $inc: { views: 1 } },
+    { new: true }, // Return updated document
+  );
+
+  if (!video) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, video, "View count updated"));
+});
+
 export {
   getAllVideos,
   publishAVideo,
@@ -261,4 +284,5 @@ export {
   updateVideo,
   deleteVideo,
   togglePublishStatus,
+  incrementView,
 };

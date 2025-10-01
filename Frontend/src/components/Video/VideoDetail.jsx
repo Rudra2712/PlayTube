@@ -1,47 +1,48 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams, Link } from "react-router-dom";
-import { getVideo, getAllVideos } from "../../app/Slices/videoSlice";
 import { addToHistory } from "../../app/Slices/historySlice.js";
-import { toggleVideoLike, getVideoLikeStatus, clearLikeStatus } from "../../app/Slices/likeSlice.js";
+import {
+  toggleVideoLike,
+  getVideoLikeStatus,
+  clearLikeStatus,
+} from "../../app/Slices/likeSlice.js";
 import VideoList from "../Video/VideoList.jsx";
 import CommentsSection from "../Comment/CommentSection.jsx";
+import {
+  getVideo,
+  getAllVideos,
+  updateView,
+} from "../../app/Slices/videoSlice";
 
 const VideoDetail = () => {
   const { videoId } = useParams();
   const dispatch = useDispatch();
   const hasAddedToHistory = useRef(false);
+  const hasCountedView = useRef(false);
 
   const { video, videos, loading, error } = useSelector((state) => state.video);
-  const { 
-    loading: likeLoading, 
-    likeStatus: { isLiked, likesCount, loading: likeStatusLoading } 
+  const {
+    loading: likeLoading,
+    likeStatus: { isLiked, likesCount, loading: likeStatusLoading },
   } = useSelector((state) => state.like);
+
+  // Reset flags when videoId changes
+  useEffect(() => {
+    hasAddedToHistory.current = false;
+    hasCountedView.current = false;
+  }, [videoId]);
 
   // Fetch video like status when video loads
   useEffect(() => {
     if (videoId) {
       dispatch(getVideoLikeStatus(videoId));
     }
-    
+
     return () => {
-      // Clear like status when component unmounts or videoId changes
       dispatch(clearLikeStatus());
     };
   }, [videoId, dispatch]);
-
-  // Add to history when video is loaded
-  useEffect(() => {
-    if (video?._id && !hasAddedToHistory.current) {
-      dispatch(addToHistory(video._id));
-      hasAddedToHistory.current = true;
-    }
-  }, [video?._id, dispatch]);
-
-  // Reset history flag when videoId changes
-  useEffect(() => {
-    hasAddedToHistory.current = false;
-  }, [videoId]);
 
   // Fetch video and all suggestions
   useEffect(() => {
@@ -51,13 +52,36 @@ const VideoDetail = () => {
     }
   }, [videoId, dispatch]);
 
-  // Handle play event
-  const handleVideoPlay = () => {
-    if (video?._id && !hasAddedToHistory.current) {
-      dispatch(addToHistory(video._id));
-      hasAddedToHistory.current = true;
+  // ✅ Count view when video loads (most reliable method)
+  useEffect(() => {
+    if (!video?._id || hasCountedView.current) return;
+
+    // Check if view was already counted in this session
+    const viewedVideos = sessionStorage.getItem('viewedVideos');
+    const viewedList = viewedVideos ? JSON.parse(viewedVideos) : [];
+    
+    if (viewedList.includes(video._id)) {
+      // console.log("⏭️ View already counted in this session");
+      hasCountedView.current = true;
+      return;
     }
-  };
+
+    // console.log("👁️ Counting view for:", video._id);
+    hasCountedView.current = true;
+
+    dispatch(updateView(video._id))
+      .unwrap()
+      .then((result) => {
+        // console.log("✅ View counted successfully:", result);
+        // Mark this video as viewed in session
+        viewedList.push(video._id);
+        sessionStorage.setItem('viewedVideos', JSON.stringify(viewedList));
+      })
+      .catch((error) => {
+        console.error("❌ Failed to count view:", error);
+        hasCountedView.current = false; // Reset on error to retry
+      });
+  }, [video?._id, dispatch]);
 
   const handleToggleLike = async () => {
     if (!video?._id) return;
@@ -82,16 +106,10 @@ const VideoDetail = () => {
           {/* Video Player */}
           <div className="mb-4">
             <video
+              key={video._id}
               src={video.videoFile}
               controls
               className="w-full max-h-[500px] rounded-lg"
-              onPlay={handleVideoPlay}
-              onLoadedData={() => {
-                if (video?._id && !hasAddedToHistory.current) {
-                  dispatch(addToHistory(video._id));
-                  hasAddedToHistory.current = true;
-                }
-              }}
             />
           </div>
 
@@ -135,7 +153,11 @@ const VideoDetail = () => {
                     isLiked
                       ? "bg-red-600 text-white"
                       : "bg-gray-700 text-gray-200 hover:bg-gray-600"
-                  } ${(likeLoading || likeStatusLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  } ${
+                    likeLoading || likeStatusLoading
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }`}
                 >
                   {likeStatusLoading ? (
                     "Loading..."

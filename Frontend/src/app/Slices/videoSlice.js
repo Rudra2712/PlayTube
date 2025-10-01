@@ -80,7 +80,6 @@ export const getAllVideos = createAsyncThunk(
   }
 );
 
-
 export const updateVideo = createAsyncThunk(
   "video/updateVideo",
   async ({ videoId, data }) => {
@@ -161,13 +160,15 @@ export const togglePublish = createAsyncThunk(
 
 export const updateView = createAsyncThunk(
   "video/updateView",
-  async (videoId) => {
+  async (videoId, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.patch(`/videos/view/${videoId}`);
-      toast.success(response.data.message);
+      const response = await axiosInstance.patch(`/videos/${videoId}/view`);
+      return response.data.data; 
     } catch (error) {
-      toast.error(parseErrorMessage(error.response.data));
-      console.log(error);
+      console.error("❌ Error updating view:", error.response?.data || error.message);
+      return rejectWithValue(
+        parseErrorMessage(error.response?.data || error.message)
+      );
     }
   }
 );
@@ -275,7 +276,14 @@ const videoSlice = createSlice({
     builder.addCase(updateView.fulfilled, (state, action) => {
       state.loading = false;
       state.status = true;
+      if (state.video && state.video._id === action.payload._id) {
+        state.video = action.payload;
+      }
+      state.videos = state.videos.map((v) =>
+        v._id === action.payload._id ? action.payload : v
+      );
     });
+
     builder.addCase(updateView.rejected, (state) => {
       state.loading = false;
       state.status = false;

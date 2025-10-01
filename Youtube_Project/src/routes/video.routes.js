@@ -6,43 +6,47 @@ import {
     publishAVideo,
     togglePublishStatus,
     updateVideo,
+    incrementView,
 } from "../controllers/video.controller.js"
 import {verifyJWT} from "../middlewares/auth.middleware.js"
 import {upload} from "../middlewares/multer.middleware.js"
 
 const router = Router();
-router.use(verifyJWT); // Apply verifyJWT middleware to all routes in this file
 
-router
-    .route("/")
-    .get(getAllVideos)
-    .post(
-        upload.fields([
-            {
-                name: "videoFile",
-                maxCount: 1,
-            },
-            {
-                name: "thumbnail",
-                maxCount: 1,
-            },
-            
-        ]),
-        publishAVideo
-    );
+// ✅ PUBLIC ROUTES (no authentication required)
+// Place these BEFORE verifyJWT middleware
+router.get("/", getAllVideos); // Public: anyone can view videos
+router.get("/:videoId", getVideoById); // Public: anyone can view a video
+router.patch("/:videoId/view", incrementView); // ✅ Public: anyone can increment view
 
-router
-    .route("/:videoId")
-    .get(getVideoById)
-    .delete(deleteVideo)
-    .patch(
-        upload.fields([
-            { name: "thumbnail", maxCount: 1 }
-        ]),
-        updateVideo
-    );
-    // .patch(upload.single("thumbnail"), updateVideo);
+// ✅ PROTECTED ROUTES (authentication required)
+router.use(verifyJWT); // All routes after this require authentication
 
-router.route("/toggle/publish/:videoId").patch(togglePublishStatus);
+router.post(
+    "/",
+    upload.fields([
+        {
+            name: "videoFile",
+            maxCount: 1,
+        },
+        {
+            name: "thumbnail",
+            maxCount: 1,
+        },
+    ]),
+    publishAVideo
+);
 
-export default router
+router.patch("/toggle/publish/:videoId", togglePublishStatus);
+
+router.delete("/:videoId", deleteVideo);
+
+router.patch(
+    "/:videoId",
+    upload.fields([
+        { name: "thumbnail", maxCount: 1 }
+    ]),
+    updateVideo
+);
+
+export default router;

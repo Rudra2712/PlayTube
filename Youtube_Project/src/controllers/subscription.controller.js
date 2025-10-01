@@ -48,23 +48,73 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, subscribers, "Channel subscribers fetched successfully"));
 });
 
-
 const getSubscribedChannels = asyncHandler(async (req, res) => {
-    const { channelId } = req.params;     // ← read channelId, not subscriberId
-  
+    const { channelId } = req.params;
+
     if (!isValidObjectId(channelId)) {
-      throw new ApiError(400, "Invalid channel ID");
+        throw new ApiError(400, "Invalid channel ID");
     }
-  
-    // Find all subscriptions where the *subscriber* is the currently logged-in user
-    const channels = await Subscription
-      .find({ subscriber: channelId })     
-      .populate("channel", "_id username email");
-  
+
+    // Use aggregation to get subscribed channels with subscriber count
+    const channels = await Subscription.aggregate([
+        {
+            $match: { subscriber: new mongoose.Types.ObjectId(channelId) }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "channel",
+                foreignField: "_id",
+                as: "channel"
+            }
+        },
+        {
+            $unwind: "$channel"
+        },
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "channel._id",
+                foreignField: "channel",
+                as: "subscribers"
+            }
+        },
+        {
+            $addFields: {
+                "channel.subscribersCount": { $size: "$subscribers" }
+            }
+        },
+        {
+            $project: {
+                "channel._id": 1,
+                "channel.username": 1,
+                "channel.email": 1,
+                "channel.avatar": 1,
+                "channel.subscribersCount": 1
+            }
+        }
+    ]);
+
     return res
-      .status(200)
-      .json(new ApiResponse(200, channels, "Subscribed channels fetched successfully"));
-  });
+        .status(200)
+        .json(new ApiResponse(200, channels, "Subscribed channels fetched successfully"));
+});
+// const getSubscribedChannels = asyncHandler(async (req, res) => {
+//     const { channelId } = req.params;     // ← read channelId, not subscriberId
+  
+//     if (!isValidObjectId(channelId)) {
+//       throw new ApiError(400, "Invalid channel ID");
+//     }
+  
+//     // Find all subscriptions where the *subscriber* is the currently logged-in user
+//     const channels = await Subscription
+//       .find({ subscriber: channelId })     
+//       .populate("channel", "_id username email");
+  
+//     return res
+//       .status(200)
+//       .json(new ApiResponse(200, channels, "Subscribed channels fetched successfully"));
+//   });
   
 
 export {

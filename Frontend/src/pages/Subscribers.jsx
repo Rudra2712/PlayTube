@@ -4,6 +4,7 @@ import {
   getSubscribedChannels,
   toggleSubscription,
 } from "../app/Slices/subscriptionSlice";
+import { Link } from "react-router-dom";
 
 function Subscribers() {
   const dispatch = useDispatch();
@@ -19,7 +20,18 @@ function Subscribers() {
   }, [dispatch, userData]);
 
   const handleToggleSubscription = (channelId) => {
-    dispatch(toggleSubscription(channelId));
+    // Optimistic UI: remove from state immediately
+    const newList = channels.filter((sub) => sub.channel._id !== channelId);
+
+    dispatch({
+      type: "subscription/getSubscribedChannels/fulfilled",
+      payload: newList,
+    });
+
+    // Then actually make the API call
+    dispatch(toggleSubscription(channelId)).then(() => {
+      dispatch(getSubscribedChannels(userData._id));
+    });
   };
 
   if (loading) {
@@ -27,8 +39,8 @@ function Subscribers() {
       <p className="text-center text-gray-500">Loading subscriptions...</p>
     );
   }
-
   if (!channels || channels.length === 0) {
+    // console.log(channels);
     return (
       <p className="text-center text-gray-400">
         You haven’t subscribed to any channels yet.
@@ -50,16 +62,18 @@ function Subscribers() {
           >
             {/* Channel Info */}
             <div className="flex items-center gap-x-3">
-              <div className="h-14 w-14 shrink-0">
-                <img
-                  src={
-                    sub.channel.avatar ||
-                    "https://via.placeholder.com/150x150.png?text=No+Avatar"
-                  }
-                  alt={sub.channel.username}
-                  className="h-full w-full rounded-full object-cover"
-                />
-              </div>
+              <Link to={`/user/${sub.channel.username}/videos`}>
+                <div className="h-14 w-14 shrink-0">
+                  <img
+                    src={
+                      sub.channel.avatar ||
+                      "https://via.placeholder.com/150x150.png?text=No+Avatar"
+                    }
+                    alt={sub.channel.username}
+                    className="h-full w-full rounded-full object-cover"
+                  />
+                </div>
+              </Link>
               <div>
                 <h6 className="font-semibold">{sub.channel.username}</h6>
                 <p className="text-sm text-gray-400">

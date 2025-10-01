@@ -19,7 +19,7 @@ function MyChannelVideos() {
         .then((res) => console.log("Fetched videos response:", res))
         .catch((err) => console.error("Error fetching videos:", err));
     }
-  }, [loggedInUser,channelId, dispatch]);
+  }, [loggedInUser, channelId, dispatch]);
 
   // console.log("Redux video state - videos:", videos);
   // console.log("Channel ID:", channelId);
@@ -41,6 +41,10 @@ function MyChannelVideos() {
       {!videos || !videos.length ? (
         <MyChannelEmptyVideo />
       ) : (
+        <>
+          <h2 className="text-2xl font-bold mb-6 text-gray-600">
+            Videos
+          </h2>
         <div className="grid grid-cols-[repeat(auto-fit,_minmax(300px,_1fr))] gap-4 pt-2">
           {videos.map((video) => (
             <div className="w-full" key={video._id}>
@@ -50,20 +54,21 @@ function MyChannelVideos() {
                     src={video.thumbnail}
                     alt={video.title}
                     className="absolute inset-0 h-full w-full object-cover rounded"
-                  />
+                    />
                   <span className="absolute bottom-1 right-1 bg-black px-1.5 text-sm rounded">
-                    {(video.duration/100).toFixed(2).replace(".", ":")}
+                    {(video.duration / 100).toFixed(2).replace(".", ":")}
                   </span>
                 </div>
                 <h6 className="mb-1 font-semibold">{video.title}</h6>
                 <p className="text-sm text-gray-400">
                   {video.views} views ·{" "}
-                  {new Date(video.createdAt).toLocaleDateString()}  
+                  {new Date(video.createdAt).toLocaleDateString()}
                 </p>
               </Link>
             </div>
           ))}
         </div>
+      </>
       )}
     </>
   );

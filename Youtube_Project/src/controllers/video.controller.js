@@ -1,11 +1,92 @@
 import mongoose, { isValidObjectId } from "mongoose";
 import { Video } from "../models/video.models.js";
 import { User } from "../models/user.models.js";
+import { Like } from "../models/like.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinery.js";
 
+// const getAllVideos = asyncHandler(async (req, res) => {
+//   const {
+//     page = 1,
+//     limit = 10,
+//     query,
+//     sortBy = "createdAt",
+//     sortType = "desc",
+//     userId,
+//     username,
+//   } = req.query;
+
+//   // Build filter
+//   const filter = {};
+
+//   if (query) {
+//     filter.$or = [
+//       { title: { $regex: query, $options: "i" } },
+//       { description: { $regex: query, $options: "i" } },
+//     ];
+//   }
+
+//   // If userId is provided
+//   if (userId && isValidObjectId(userId)) {
+//     filter.owner = userId;
+//   }
+
+//   // If username is provided
+//   if (username && !userId) {
+//     const user = await User.findOne({
+//       username: username.trim(),
+//     });
+//     if (!user) {
+//       return res.status(404).json(new ApiResponse(404, null, "User not found"));
+//     }
+//     filter.owner = user._id;
+//   }
+
+//   // Sorting
+//   const sort = {};
+//   sort[sortBy] = sortType === "asc" ? 1 : -1;
+
+//   // Pagination
+//   const skip = (parseInt(page) - 1) * parseInt(limit);
+//   const perPage = parseInt(limit);
+
+//   // Query videos
+//   const [videos, total] = await Promise.all([
+//     Video.find(filter)
+//       .populate("owner", "username avatar fullName")
+//       .sort(sort)
+//       .skip(skip)
+//       .limit(perPage),
+//     Video.countDocuments(filter),
+//   ]);
+
+//   // ✅ Add like counts to each video
+//   const videosWithLikes = await Promise.all(
+//     videos.map(async (video) => {
+//       const likesCount = await Like.countDocuments({ video: video._id });
+//       return {
+//         ...video.toObject(),
+//         likesCount,
+//       };
+//     })
+//   );
+
+//   return res.status(200).json(
+//     new ApiResponse(
+//       200,
+//       {
+//         videos: videosWithLikes,
+//         total,
+//         page: parseInt(page),
+//         limit: perPage,
+//         totalPages: Math.ceil(total / perPage),
+//       },
+//       "Videos fetched successfully"
+//     )
+//   );
+// });
 const getAllVideos = asyncHandler(async (req, res) => {
   const {
     page = 1,
@@ -14,11 +95,21 @@ const getAllVideos = asyncHandler(async (req, res) => {
     sortBy = "createdAt",
     sortType = "desc",
     userId,
-    username, // 👈 add this
+    username,
   } = req.query;
 
   // Build filter
   const filter = {};
+
+  // ✅ FIXED: Only filter published videos if the requester is NOT the owner
+  // const isOwnerRequest =
+  //   req.user?._id && userId && userId === req.user._id.toString();
+
+  // if (!isOwnerRequest) {
+  //   // If not the owner viewing their own content, only show published videos
+  //   filter.isPublished = true;
+  // }
+  // If it IS the owner, don't add the isPublished filter (show all videos)
 
   if (query) {
     filter.$or = [
@@ -42,6 +133,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
     }
     filter.owner = user._id;
   }
+
   // Sorting
   const sort = {};
   sort[sortBy] = sortType === "asc" ? 1 : -1;
@@ -53,20 +145,29 @@ const getAllVideos = asyncHandler(async (req, res) => {
   // Query videos
   const [videos, total] = await Promise.all([
     Video.find(filter)
-      .populate("owner", "username avatar")
+      .populate("owner", "username avatar fullName")
       .sort(sort)
       .skip(skip)
       .limit(perPage),
     Video.countDocuments(filter),
   ]);
-  // console.log("Incoming username:", username);
-  // console.log("Filter before video query:", filter);
+
+  // ✅ Add like counts to each video
+  const videosWithLikes = await Promise.all(
+    videos.map(async (video) => {
+      const likesCount = await Like.countDocuments({ video: video._id });
+      return {
+        ...video.toObject(),
+        likesCount,
+      };
+    }),
+  );
 
   return res.status(200).json(
     new ApiResponse(
       200,
       {
-        videos,
+        videos: videosWithLikes,
         total,
         page: parseInt(page),
         limit: perPage,
@@ -76,28 +177,13 @@ const getAllVideos = asyncHandler(async (req, res) => {
     ),
   );
 });
-
 const publishAVideo = asyncHandler(async (req, res) => {
-  // STEPS:
-  // 1. Get video details from request body (title, description)
-  // 2. Validate required fields
-  // 3. Check if video file and thumbnail are uploaded
-  // 4. Upload video file to cloudinary
-  // 5. Upload thumbnail to cloudinary
-  // 6. Get video duration from cloudinary response
-  // 7. Create video object in database
-  // 8. Remove sensitive fields from response
-  // 9. Return success response
-
-  // 1. Get video details from request body
   const { title, description } = req.body;
 
-  // 2. Validation
   if (!title || !description) {
     throw new ApiError(400, "Title and description are required");
   }
 
-  // 3. Check if video file and thumbnail are uploaded
   const videoLocalPath = req.files?.videoFile?.[0]?.path;
   const thumbnailLocalPath = req.files?.thumbnail?.[0]?.path;
 
@@ -109,24 +195,20 @@ const publishAVideo = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Thumbnail is required");
   }
 
-  // 4. Upload video file to cloudinary
   const videoFile = await uploadOnCloudinary(videoLocalPath);
 
   if (!videoFile) {
     throw new ApiError(400, "Video file upload failed");
   }
 
-  // 5. Upload thumbnail to cloudinary
   const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
 
   if (!thumbnail) {
     throw new ApiError(400, "Thumbnail upload failed");
   }
 
-  // 6. Get video duration from cloudinary response
   const duration = videoFile.duration || 0;
 
-  // 7. Create video object in database
   const video = await Video.create({
     title,
     description,
@@ -136,14 +218,12 @@ const publishAVideo = asyncHandler(async (req, res) => {
     owner: req.user._id,
   });
 
-  // 8. check if video is created
   const createdVideo = await Video.findById(video._id);
 
   if (!createdVideo) {
     throw new ApiError(500, "Video creation failed");
   }
 
-  // 9. Return success response
   return res
     .status(201)
     .json(new ApiResponse(201, createdVideo, "Video published successfully"));
@@ -156,19 +236,25 @@ const getVideoById = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid video ID");
   }
 
-  // Populate owner with only required fields
   const video = await Video.findById(videoId).populate(
     "owner",
-    "username fullName avatar", // include only fields you need
+    "username fullName avatar",
   );
 
   if (!video) {
     throw new ApiError(404, "Video not found");
   }
 
+  // ✅ Add like count to the video
+  const likesCount = await Like.countDocuments({ video: videoId });
+  const videoWithLikes = {
+    ...video.toObject(),
+    likesCount,
+  };
+
   return res
     .status(200)
-    .json(new ApiResponse(200, video, "Video fetched successfully"));
+    .json(new ApiResponse(200, videoWithLikes, "Video fetched successfully"));
 });
 
 const updateVideo = asyncHandler(async (req, res) => {
@@ -184,29 +270,32 @@ const updateVideo = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Video not found");
   }
 
-  // Update fields if provided
   if (title) video.title = title;
   if (description) video.description = description;
 
-  // Handle thumbnail update (file upload or direct URL)
   const thumbnailLocalPath = req.files?.thumbnail?.[0]?.path;
   if (thumbnailLocalPath) {
-    // Upload new thumbnail to Cloudinary
     const uploadedThumbnail = await uploadOnCloudinary(thumbnailLocalPath);
     if (!uploadedThumbnail) {
       throw new ApiError(400, "Thumbnail upload failed");
     }
     video.thumbnail = uploadedThumbnail.url;
   } else if (req.body.thumbnail) {
-    // Use thumbnail from request body (URL)
     video.thumbnail = req.body.thumbnail;
   }
 
   await video.save();
 
+  // ✅ Add like count to response
+  const likesCount = await Like.countDocuments({ video: videoId });
+  const videoWithLikes = {
+    ...video.toObject(),
+    likesCount,
+  };
+
   return res
     .status(200)
-    .json(new ApiResponse(200, video, "Video updated successfully"));
+    .json(new ApiResponse(200, videoWithLikes, "Video updated successfully"));
 });
 
 const deleteVideo = asyncHandler(async (req, res) => {
@@ -256,25 +345,26 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
 const incrementView = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
 
-  // Validate videoId
-  if (!isValidObjectId(videoId)) {
-    throw new ApiError(400, "Invalid video ID");
-  }
-
-  // Increment view count
   const video = await Video.findByIdAndUpdate(
     videoId,
     { $inc: { views: 1 } },
-    { new: true }, // Return updated document
+    { new: true },
   );
 
   if (!video) {
     throw new ApiError(404, "Video not found");
   }
 
+  // ✅ Add like count to response
+  const likesCount = await Like.countDocuments({ video: videoId });
+  const videoWithLikes = {
+    ...video.toObject(),
+    likesCount,
+  };
+
   return res
     .status(200)
-    .json(new ApiResponse(200, video, "View count updated"));
+    .json(new ApiResponse(200, videoWithLikes, "View count updated"));
 });
 
 export {

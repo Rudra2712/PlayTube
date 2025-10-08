@@ -8,7 +8,10 @@ import {
   getAllVideos,
   deleteVideo,
   updateVideo,
+  togglePublish, // Make sure this is imported
+  setVideos, // Import the setVideos action
 } from "../../app/Slices/videoSlice";
+import { axiosInstance } from "../../helpers/axios.helper";
 import { toast } from "react-toastify";
 
 function Dashboard() {
@@ -21,6 +24,9 @@ function Dashboard() {
   const [selectedVideoId, setSelectedVideoId] = useState(null);
   const [editOpen, setEditOpen] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState(null);
+  const [likeCounts, setLikeCounts] = useState({});
+
+  // Fetch videos when component mounts or channelId changes
   useEffect(() => {
     if (channelId) {
       dispatch(getAllVideos({ userId: channelId }))
@@ -29,15 +35,83 @@ function Dashboard() {
     }
   }, [channelId, dispatch]);
 
-  // Dashboard.jsx
+  // Fetch like counts for all videos
+  useEffect(() => {
+    const fetchLikeCounts = async () => {
+      if (!videos || videos.length === 0) return;
+
+      try {
+        const counts = {};
+        await Promise.all(
+          videos.map(async (video) => {
+            try {
+              const response = await axiosInstance.get(
+                `/likes/status/${video._id}`
+              );
+              counts[video._id] = response.data.data.likesCount || 0;
+            } catch (error) {
+              console.error(
+                `Failed to fetch likes for video ${video._id}:`,
+                error
+              );
+              counts[video._id] = 0;
+            }
+          })
+        );
+        setLikeCounts(counts);
+      } catch (error) {
+        console.error("Error fetching like counts:", error);
+      }
+    };
+
+    fetchLikeCounts();
+  }, [videos]);
+
+  // Refetch videos when user returns to the dashboard tab
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && channelId) {
+        dispatch(getAllVideos({ userId: channelId }))
+          .unwrap?.()
+          .catch((err) => console.error("Refetch videos error:", err));
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [channelId, dispatch]);
+
+  // ✅ ADD THIS FUNCTION: Handle publish toggle
+  const handleTogglePublish = async (videoId) => {
+    try {
+      await dispatch(togglePublish(videoId)).unwrap();
+      // Update the local state to reflect the change
+      const updatedVideos = videos.map((video) =>
+        video._id === videoId
+          ? { ...video, isPublished: !video.isPublished }
+          : video
+      );
+      dispatch(setVideos(updatedVideos)); // Add setVideos action to your slice
+      toast.success("Video visibility updated successfully!");
+    } catch (error) {
+      console.error("Failed to toggle publish status:", error);
+      toast.error("Failed to update publish status");
+    }
+  };
+
   const handleUpdateVideo = (videoId, updatedData) => {
     console.log("Updating video with ID:", videoId);
 
-    // ✅ Pass plain object, thunk will decide if FormData is needed
     dispatch(updateVideo({ videoId, data: updatedData }))
       .unwrap()
       .then(() => {
         toast.success("Video updated successfully!");
+        if (channelId) {
+          dispatch(getAllVideos({ userId: channelId }));
+        }
       })
       .catch((err) => {
         console.error("Update failed:", err);
@@ -45,18 +119,18 @@ function Dashboard() {
       });
   };
 
-  // Derived stats (simple sums)
+  // Calculate total views and likes from videos + likeCounts
   const { totalViews, totalLikes } = useMemo(() => {
     const totals = videos.reduce(
       (acc, v) => {
         acc.views += Number(v.views || 0);
-        acc.likes += Number(v.likes || v.likeCount || v.likesCount || 0);
+        acc.likes += Number(likeCounts[v._id] || 0);
         return acc;
       },
       { views: 0, likes: 0 }
     );
     return { totalViews: totals.views, totalLikes: totals.likes };
-  }, [videos]);
+  }, [videos, likeCounts]);
 
   const openDelete = (videoId) => {
     setSelectedVideoId(videoId);
@@ -68,11 +142,9 @@ function Dashboard() {
     setDeleteModalOpen(false);
   };
 
-  // Called after delete success to refresh list
   const handleDeleteConfirmed = async (videoId) => {
     try {
       await dispatch(deleteVideo(videoId)).unwrap();
-      // refetch videos after deletion
       if (channelId) {
         dispatch(getAllVideos({ userId: channelId }));
       }
@@ -83,7 +155,6 @@ function Dashboard() {
   };
 
   function formatDurationSeconds(duration) {
-    // Accepts seconds (or string/number). Falls back to 0.
     const secs = Math.max(0, Math.floor(Number(duration) || 0));
     const m = Math.floor(secs / 60);
     const s = secs % 60;
@@ -95,17 +166,27 @@ function Dashboard() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Welcome Back, React Patterns</h1>
+          <h1 className="text-3xl font-bold">
+            Welcome Back,{" "}
+            {loggedInUser?.fullName || loggedInUser?.username || "Creator"}
+          </h1>
           <p className="text-sm text-gray-400">
             Seamless Video Management, Elevated Results.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-6">
           <div className="text-right">
-            <div className="text-sm text-gray-400">Total views</div>
-            <div className="text-lg font-semibold">
+            <div className="text-sm text-gray-400">Total Views</div>
+            <div className="text-2xl font-bold">
               {totalViews.toLocaleString()}
+            </div>
+          </div>
+
+          <div className="text-right">
+            <div className="text-sm text-gray-400">Total Likes</div>
+            <div className="text-2xl font-bold">
+              {totalLikes.toLocaleString()}
             </div>
           </div>
 
@@ -159,17 +240,23 @@ function Dashboard() {
                     />
                   </td>
 
-                  <td className="px-4 py-3 text-sm text-gray-300">
-                    {/* If you have a publish flag use it; fall back to 'Published' */}
-                    {video.isPublished === false ? (
-                      <span className="rounded-2xl border px-2 py-0.5 text-sm text-gray-300">
-                        Draft
+                  <td className="px-4 py-3">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={video.isPublished} // true → Published, false → Draft
+                        onChange={() => handleTogglePublish(video._id)}
+                        className="h-5 w-5 accent-green-500 cursor-pointer"
+                        aria-label={`Toggle publish status for ${video.title}`}
+                      />
+                      <span
+                        className={`text-sm font-medium ${
+                          video.isPublished ? "text-green-400" : "text-gray-400"
+                        }`}
+                      >
+                        {video.isPublished ? "Published" : "Draft"}
                       </span>
-                    ) : (
-                      <span className="rounded-2xl border px-2 py-0.5 text-sm text-green-400">
-                        Published
-                      </span>
-                    )}
+                    </label>
                   </td>
 
                   <td className="px-4 py-3">
@@ -205,12 +292,7 @@ function Dashboard() {
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
                       <span className="rounded bg-green-200 px-2 py-1 text-sm text-green-800">
-                        {(
-                          Number(video.likes) ||
-                          Number(video.likeCount) ||
-                          0
-                        ).toLocaleString()}{" "}
-                        likes
+                        {(likeCounts[video._id] || 0).toLocaleString()} likes
                       </span>
                       <span className="rounded bg-gray-800 px-2 py-1 text-sm text-gray-300">
                         {(Number(video.views) || 0).toLocaleString()} views
@@ -239,21 +321,22 @@ function Dashboard() {
                       </button>
                     </div>
                   </td>
-                  {/* Edit Modal */}
-                  {editOpen && selectedVideo && (
-                    <EditVideo
-                      isOpen={editOpen}
-                      onClose={() => setEditOpen(false)}
-                      video={selectedVideo}
-                      onUpdate={handleUpdateVideo}
-                    />
-                  )}
                 </tr>
               ))
             )}
           </tbody>
         </table>
       </div>
+
+      {/* Edit Modal */}
+      {editOpen && selectedVideo && (
+        <EditVideo
+          isOpen={editOpen}
+          onClose={() => setEditOpen(false)}
+          video={selectedVideo}
+          onUpdate={handleUpdateVideo}
+        />
+      )}
 
       {/* Upload Modal */}
       {showUpload && (
@@ -270,21 +353,23 @@ function Dashboard() {
               </button>
             </div>
 
-            <UploadVideo onSuccess={() => setShowUpload(false)} />
+            <UploadVideo
+              onSuccess={() => {
+                setShowUpload(false);
+                if (channelId) {
+                  dispatch(getAllVideos({ userId: channelId }));
+                }
+              }}
+            />
           </div>
         </div>
       )}
 
-      {/* Delete Modal — we're passing onClose and handler to call delete thunk */}
+      {/* Delete Modal */}
       {deleteModalOpen && selectedVideoId && (
         <DeleteVideo
           videoId={selectedVideoId}
           onClose={closeDelete}
-          // If DeleteVideo needs a callback instead of calling delete thunk itself,
-          // it can call onClose or we can pass handleDeleteConfirmed function.
-          // Here we'll allow DeleteVideo to call onClose; but to run delete action from Dashboard:
-          // If your DeleteVideo component accepts a onConfirm prop, prefer:
-          // onConfirm={() => handleDeleteConfirmed(selectedVideoId)}
           onConfirm={() => handleDeleteConfirmed(selectedVideoId)}
         />
       )}

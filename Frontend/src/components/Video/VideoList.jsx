@@ -9,6 +9,7 @@ const VideoList = ({ video }) => {
       {/* Thumbnail */}
       <Link
         to={`/video/${video._id}`}
+        state={{ fromInternalNav: true }} // Add this line
         className="relative mb-2 w-full md:mb-0 md:w-5/12"
       >
         <div className="w-full pt-[56%]">
@@ -40,7 +41,7 @@ const VideoList = ({ video }) => {
             <Link to={`/video/${video._id}`}>{video.title}</Link>
           </h6>
           <p className="flex text-sm text-gray-200 sm:mt-3">
-            {(video.duration / 100).toFixed(2).replace(".", ":")} Views ·{" "}
+            {(video.duration / 100).toFixed(2).replace(".", ":")} Views {video.views}&nbsp;&#183;&nbsp;
             {new Date(video.createdAt).toLocaleDateString()}
           </p>
           <div className="flex items-center gap-x-4">

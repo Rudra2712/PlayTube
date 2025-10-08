@@ -43,10 +43,12 @@ import History from "./pages/History.jsx";
 import LikedVideos from "./pages/LikedVideos.jsx";
 import Subscribers from "./pages/Subscribers.jsx";
 import AllTweets from "./pages/AllTweets.jsx";
+import Support from "./components/Support.jsx";
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<App />}>
       <Route path="" element={<Home />}>
+        <Route path="support" element={<Support />} />
         <Route path="" element={<Feed />}>
           // Home Page Feed Videos
           <Route path="" element={<FeedVideos />} />

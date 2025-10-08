@@ -2,10 +2,13 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 function VideoGrid({ videos }) {
+  // Filter only published videos for homepage
+  const publishedVideos = videos.filter(video => video.isPublished !== false);
+
   return (
     <section className="w-full pb-[70px] sm:ml-[70px] sm:pb-0 lg:ml-0">
       <div className="grid grid-cols-[repeat(auto-fit,_minmax(300px,_1fr))] gap-4 p-4">
-        {videos.map((video) => (
+        {publishedVideos.map((video) => (
           <Link
             to={`/video/${video._id}`}
             key={video._id}
@@ -45,6 +48,13 @@ function VideoGrid({ videos }) {
             </div>
           </Link>
         ))}
+        
+        {/* Show message if no published videos */}
+        {publishedVideos.length === 0 && (
+          <div className="col-span-full text-center py-8 text-gray-400">
+            No published videos available
+          </div>
+        )}
       </div>
     </section>
   );

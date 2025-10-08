@@ -163,9 +163,12 @@ export const updateView = createAsyncThunk(
   async (videoId, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.patch(`/videos/${videoId}/view`);
-      return response.data.data; 
+      return response.data.data;
     } catch (error) {
-      console.error("❌ Error updating view:", error.response?.data || error.message);
+      console.error(
+        "❌ Error updating view:",
+        error.response?.data || error.message
+      );
       return rejectWithValue(
         parseErrorMessage(error.response?.data || error.message)
       );
@@ -176,6 +179,12 @@ export const updateView = createAsyncThunk(
 const videoSlice = createSlice({
   name: "video",
   initialState,
+  reducers: {
+    // ...other reducers
+    setVideos: (state, action) => {
+      state.videos = action.payload;
+    }
+  },
   extraReducers: (builder) => {
     // Get video
     builder.addCase(getVideo.pending, (state) => {
@@ -261,12 +270,19 @@ const videoSlice = createSlice({
     });
     builder.addCase(togglePublish.fulfilled, (state, action) => {
       state.loading = false;
-      state.video = action.payload;
-      state.status = true;
+      // Update the specific video in the videos array
+      if (action.payload) {
+        const index = state.videos.findIndex(
+          (video) => video._id === action.payload._id
+        );
+        if (index !== -1) {
+          state.videos[index] = action.payload;
+        }
+      }
     });
-    builder.addCase(togglePublish.rejected, (state) => {
+    builder.addCase(togglePublish.rejected, (state, action) => {
       state.loading = false;
-      state.status = false;
+      state.error = action.payload || "Failed to toggle publish status";
     });
 
     // update view
@@ -290,5 +306,7 @@ const videoSlice = createSlice({
     });
   },
 });
+
+export const { setVideos } = videoSlice.actions;
 
 export default videoSlice.reducer;

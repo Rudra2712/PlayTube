@@ -65,9 +65,11 @@ const CommentsSection = ({ videoId }) => {
       <div className="flex items-center gap-3 mb-6">
         <MessageCircle size={24} className="text-gray-400" />
         <h3 className="text-xl font-semibold text-white">Comments</h3>
-        <span className="text-gray-400">({pagination?.totalComments || 0})</span>
+        <span className="text-gray-400">
+          ({pagination?.totalComments || 0})
+        </span>
       </div>
-      
+
       <CommentForm videoId={videoId} onCommentAdded={handleCommentAdded} />
 
       <div className="space-y-0">
@@ -75,7 +77,9 @@ const CommentsSection = ({ videoId }) => {
           <div className="text-center py-8">
             <MessageCircle size={48} className="text-gray-600 mx-auto mb-3" />
             <p className="text-gray-400 text-lg mb-2">No comments yet</p>
-            <p className="text-gray-500">Be the first to comment on this video!</p>
+            <p className="text-gray-500">
+              Be the first to comment on this video!
+            </p>
           </div>
         ) : (
           <>

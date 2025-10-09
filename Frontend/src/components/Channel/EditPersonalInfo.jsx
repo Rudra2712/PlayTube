@@ -1,6 +1,79 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { useOutletContext } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { axiosInstance } from "../../helpers/axios.helper";
+import { channelProfile } from "../../app/Slices/userSlice";
+import { toast } from "react-toastify";
 
 function EditPersonalInfo() {
+  const { user } = useOutletContext();
+  const dispatch = useDispatch();
+  
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: ""
+  });
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user?.fullName) {
+      const nameParts = user.fullName.split(" ");
+      setFormData({
+        firstName: nameParts[0] || "",
+        lastName: nameParts.slice(1).join(" ") || "",
+        email: user.email || ""
+      });
+    }
+  }, [user]);
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleCancel = () => {
+    if (user?.fullName) {
+      const nameParts = user.fullName.split(" ");
+      setFormData({
+        firstName: nameParts[0] || "",
+        lastName: nameParts.slice(1).join(" ") || "",
+        email: user.email || ""
+      });
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.firstName.trim() || !formData.email.trim()) {
+      toast.error("First name and email are required");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const fullName = `${formData.firstName.trim()} ${formData.lastName.trim()}`.trim();
+      
+      const response = await axiosInstance.patch("/users/update-account", {
+        fullName,
+        email: formData.email
+      });
+
+      toast.success("Personal information updated successfully");
+      
+      // Refresh user data
+      if (user?.username) {
+        dispatch(channelProfile(user.username));
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update personal information");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-wrap justify-center gap-y-4 py-4">
       <div className="w-full sm:w-1/2 lg:w-1/3">
@@ -11,31 +84,35 @@ function EditPersonalInfo() {
         <div className="rounded-lg border">
           <div className="flex flex-wrap gap-y-4 p-4">
             <div className="w-full lg:w-1/2 lg:pr-2">
-              <label for="firstname" className="mb-1 inline-block">
+              <label htmlFor="firstname" className="mb-1 inline-block">
                 First name
               </label>
               <input
                 type="text"
                 className="w-full rounded-lg border bg-transparent px-2 py-1.5"
                 id="firstname"
+                name="firstName"
                 placeholder="Enter first name"
-                value="React"
+                value={formData.firstName}
+                onChange={handleChange}
               />
             </div>
             <div className="w-full lg:w-1/2 lg:pl-2">
-              <label for="lastname" className="mb-1 inline-block">
+              <label htmlFor="lastname" className="mb-1 inline-block">
                 Last name
               </label>
               <input
                 type="text"
                 className="w-full rounded-lg border bg-transparent px-2 py-1.5"
                 id="lastname"
+                name="lastName"
                 placeholder="Enter last name"
-                value="Patterns"
+                value={formData.lastName}
+                onChange={handleChange}
               />
             </div>
             <div className="w-full">
-              <label for="lastname" className="mb-1 inline-block">
+              <label htmlFor="email" className="mb-1 inline-block">
                 Email address
               </label>
               <div className="relative">
@@ -44,13 +121,13 @@ function EditPersonalInfo() {
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
-                    stroke-width="1.5"
+                    strokeWidth="1.5"
                     stroke="currentColor"
                     aria-hidden="true"
                   >
                     <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                       d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"
                     ></path>
                   </svg>
@@ -58,20 +135,30 @@ function EditPersonalInfo() {
                 <input
                   type="email"
                   className="w-full rounded-lg border bg-transparent py-1.5 pl-10 pr-2"
-                  id="lastname"
+                  id="email"
+                  name="email"
                   placeholder="Enter email address"
-                  value="patternsreact@gmail.com"
+                  value={formData.email}
+                  onChange={handleChange}
                 />
               </div>
             </div>
           </div>
           <hr className="border border-gray-300" />
           <div className="flex items-center justify-end gap-4 p-4">
-            <button className="inline-block rounded-lg border px-3 py-1.5 hover:bg-white/10">
+            <button 
+              className="inline-block rounded-lg border px-3 py-1.5 hover:bg-white/10"
+              onClick={handleCancel}
+              disabled={loading}
+            >
               Cancel
             </button>
-            <button className="inline-block bg-[#ae7aff] px-3 py-1.5 text-black">
-              Save changes
+            <button 
+              className="inline-block bg-[#ae7aff] px-3 py-1.5 text-black disabled:opacity-50"
+              onClick={handleSubmit}
+              disabled={loading}
+            >
+              {loading ? "Saving..." : "Save changes"}
             </button>
           </div>
         </div>

@@ -1,8 +1,16 @@
 import React from 'react';
+import { NavLink } from 'react-router-dom';
 
 const Support = () => {
   return (
     <div className="min-h-screen bg-[#121212] text-white p-8">
+      <NavLink 
+        to="/" 
+        className="inline-block mb-6 text-gray-300 hover:text-[#ae7aff] transition-colors"
+      >
+        ← Back to Home
+      </NavLink>
+      
       <div className="max-w-3xl mx-auto bg-[#1e1e1e] rounded-lg shadow-xl p-8">
         <h1 className="text-4xl font-bold text-center mb-8 text-[#ae7aff]">
           Support & Contact

@@ -38,7 +38,7 @@ import Settings from "./Channel/Settings";
 import LogoutBtn from "./Atoms/LogoutBtn";
 import Button from "./Atoms/Button";
 import Input from "./Atoms/Input";
-
+import AddVideoToPlaylist from "./Channel/AddVideoToPlaylist";
 export {
   Settings,
   Input,
@@ -48,6 +48,7 @@ export {
   MyChannelSubscribed,
   VideoGrid,
   Header,
+  AddVideoToPlaylist,
   LogoutBtn,
   VideoList,
   EmptyVideo,

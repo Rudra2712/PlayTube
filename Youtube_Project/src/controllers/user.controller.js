@@ -36,9 +36,6 @@ const registerUser = asyncHandler(async (req, res) => {
   //7. remove password and refresh token from response
   //8. check for user creation
   //9. return response
-  
-
-   
 
   // 1. Get user details from Tailwind
   const { fullName, email, username, password } = req.body;
@@ -59,7 +56,6 @@ const registerUser = asyncHandler(async (req, res) => {
   if (existedUser) {
     throw new ApiError(409, "Username or email already exists");
   }
-
 
   // 4. Check for images, check for avatar
   const avatarLocalPath = req.files?.avatar?.[0]?.path;
@@ -104,8 +100,8 @@ const registerUser = asyncHandler(async (req, res) => {
   // 8. Check for user creation
   if (!createdUser) {
     throw new ApiError(500, "User registration failed");
-  } 
-  
+  }
+
   // 9. Return response
   return res
     .status(201)
@@ -152,8 +148,8 @@ const loginUser = asyncHandler(async (req, res) => {
   //optional step
   const loggedInUser = await User.findById(user._id).select(
     "-password -refreshToken",
-  ); 
-   
+  );
+
   const options = {
     httpOnly: true, // cookie cannot be accessed by client-side scripts
     secure: true,
@@ -367,7 +363,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     throw error;
   }
 });
-  
+
 const getUserChannelProfile = asyncHandler(async (req, res) => {
   const { username } = req.params;
 
@@ -444,6 +440,17 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
       new ApiResponse(200, channel[0], "Channel profile fetched successfully"),
     );
 });
+// controllers/user.controller.js
+const getUserByUsername = asyncHandler(async (req, res) => {
+  const { username } = req.params;
+  const user = await User.findOne({ username });
+
+  if (!user) throw new ApiError(404, "User not found");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "User fetched successfully", user));
+});
 
 const getWatchHistory = asyncHandler(async (req, res) => {
   const user = await User.aggregate([
@@ -511,4 +518,5 @@ export {
   updateUserCoverImage,
   getUserChannelProfile,
   getWatchHistory,
+  getUserByUsername,
 };

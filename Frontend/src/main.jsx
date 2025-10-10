@@ -35,6 +35,7 @@ import {
   UploadingVideo,
   UploadVideo,
   PlaylistVideos,
+  AddVideoToPlaylist,
 } from "./components/index.js";
 import FeedVideos from "./pages/FeedVideos.jsx";
 import Channel from "./pages/Channel.jsx";
@@ -76,7 +77,9 @@ const router = createBrowserRouter(
             <Route path="changepwd" element={<ChangePassword />} />
           </Route>
           // Playlists
-          <Route path="playlist/:playlistId" element={<PlaylistVideos />} />
+          <Route path="playlist/:playlistId" element={<PlaylistVideos />} >
+            <Route path="add-video" element={<AddVideoToPlaylist />} />
+          </Route>
           <Route path="tweets" element={<AllTweets />} />
         </Route>
         //Video Watching

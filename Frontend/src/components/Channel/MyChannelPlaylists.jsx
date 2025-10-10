@@ -1,141 +1,117 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  getUserPlaylists,
+  deletePlaylist,
+} from "../../app/Slices/playlistSlice";
+import { toast } from "react-toastify";
 import MyChannelEmptyPlaylist from "./MyChannelEmptyPlaylist";
+import EmptyPlaylist from "../Playlist/EmptyPlaylist";
 function MyChannelPlaylists() {
-  const [playlist, setPlaylist] = useState("");
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  return !playlist ? (
-    <MyChannelEmptyPlaylist />
-  ) : (
-    <div className="grid gap-4 pt-2 sm:grid-cols-[repeat(auto-fit,_minmax(400px,_1fr))]">
-      <div className="w-full">
-        <div className="relative mb-2 w-full pt-[56%]">
-          <div className="absolute inset-0">
-            <img
-              src="https://images.pexels.com/photos/3561339/pexels-photo-3561339.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-              alt="React Mastery"
-              className="h-full w-full"
-            />
-            <div className="absolute inset-x-0 bottom-0">
-              <div className="relative border-t bg-white/30 p-4 text-white backdrop-blur-sm before:absolute before:inset-0 before:bg-black/40">
-                <div className="relative z-[1]">
-                  <p className="flex justify-between">
-                    <span className="inline-block">Playlist</span>
-                    <span className="inline-block">12 videos</span>
-                  </p>
-                  <p className="text-sm text-gray-200">100K Views · 2 hours ago</p>
-                </div>
+  const currentUser = useSelector((state) => state.auth?.user || state.user?.data);
+  const { data: playlists, loading } = useSelector((state) => state.playlist);
+
+  // Fetch logged-in user's playlists
+  useEffect(() => {
+    if (currentUser?._id) {
+      dispatch(getUserPlaylists(currentUser._id));
+    }
+  }, [currentUser, dispatch]);
+
+  const handleEdit = (playlistId) => {
+    navigate(`/playlist/${playlistId}`); // will open PlaylistVideos page for editing
+  };
+
+  const handleAddVideo = (playlistId) => {
+    navigate(`/playlist/${playlistId}/add-video`);
+  };
+
+  const handleDelete = async (playlistId) => {
+    try {
+      await dispatch(deletePlaylist(playlistId)).unwrap();
+      toast.success("Playlist deleted successfully");
+      dispatch(getUserPlaylists(currentUser._id)); // refresh list
+    } catch (error) {
+      toast.error("Failed to delete playlist");
+    }
+  };
+
+  if (loading) {
+    return <p className="text-gray-300 text-center py-10">Loading playlists...</p>;
+  }
+  console.log("📂 User Playlists:", playlists);
+  // If no playlists
+  if (!Array.isArray(playlists) || playlists.length === 0) {
+    return <EmptyPlaylist />;
+  }
+
+  return (
+    <div className="p-4">
+      <h2 className="text-white text-xl font-semibold mb-4">Your Playlists</h2>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {playlists.map((pl) => (
+          <div
+            key={pl._id}
+            className="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:bg-gray-700 transition group relative"
+          >
+            {/* Thumbnail */}
+            <div
+              onClick={() => navigate(`/playlist/${pl._id}`)}
+              className="relative w-full pt-[56%] cursor-pointer"
+            >
+              <img
+                src={
+                  pl.videos?.[0]?.thumbnail ||
+                  "https://via.placeholder.com/640x360?text=No+Videos"
+                }
+                alt={pl.name}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+              <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded">
+                {pl.videos?.length || 0} videos
               </div>
             </div>
-          </div>
-        </div>
-        <h6 className="mb-1 font-semibold">React Mastery</h6>
-        <p className="flex text-sm text-gray-200">
-          Master the art of building dynamic user interfaces with React.
-        </p>
-      </div>
-      <div className="w-full">
-        <div className="relative mb-2 w-full pt-[56%]">
-          <div className="absolute inset-0">
-            <img
-              src="https://images.pexels.com/photos/2519817/pexels-photo-2519817.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-              alt="JavaScript Fundamentals"
-              className="h-full w-full"
-            />
-            <div className="absolute inset-x-0 bottom-0">
-              <div className="relative border-t bg-white/30 p-4 text-white backdrop-blur-sm before:absolute before:inset-0 before:bg-black/40">
-                <div className="relative z-[1]">
-                  <p className="flex justify-between">
-                    <span className="inline-block">Playlist</span>
-                    <span className="inline-block">1 videos</span>
-                  </p>
-                  <p className="text-sm text-gray-200">120K Views · 3 hours ago</p>
-                </div>
-              </div>
+
+            {/* Info */}
+            <div className="p-4">
+              <h3 className="text-white font-semibold mb-1 line-clamp-1">
+                {pl.name}
+              </h3>
+              <p className="text-gray-400 text-sm line-clamp-2">
+                {pl.description || "No description available"}
+              </p>
+            </div>
+
+            {/* Owner controls (show on hover or always visible) */}
+            <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition">
+              <button
+                onClick={() => handleEdit(pl._id)}
+                className="bg-blue-600 text-white text-xs px-2 py-1 rounded hover:bg-blue-700"
+                title="Edit Playlist"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => handleAddVideo(pl._id)}
+                className="bg-green-600 text-white text-xs px-2 py-1 rounded hover:bg-green-700"
+                title="Add Video"
+              >
+                Add
+              </button>
+              <button
+                onClick={() => handleDelete(pl._id)}
+                className="bg-red-600 text-white text-xs px-2 py-1 rounded hover:bg-red-700"
+                title="Delete Playlist"
+              >
+                Delete
+              </button>
             </div>
           </div>
-        </div>
-        <h6 className="mb-1 font-semibold">JavaScript Fundamentals</h6>
-        <p className="flex text-sm text-gray-200">
-          Learn the core concepts and fundamentals of JavaScript programming language.
-        </p>
-      </div>
-      <div className="w-full">
-        <div className="relative mb-2 w-full pt-[56%]">
-          <div className="absolute inset-0">
-            <img
-              src="https://images.pexels.com/photos/1739849/pexels-photo-1739849.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-              alt="TypeScript Essentials"
-              className="h-full w-full"
-            />
-            <div className="absolute inset-x-0 bottom-0">
-              <div className="relative border-t bg-white/30 p-4 text-white backdrop-blur-sm before:absolute before:inset-0 before:bg-black/40">
-                <div className="relative z-[1]">
-                  <p className="flex justify-between">
-                    <span className="inline-block">Playlist</span>
-                    <span className="inline-block">2 videos</span>
-                  </p>
-                  <p className="text-sm text-gray-200">90K Views · 4 hours ago</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <h6 className="mb-1 font-semibold">TypeScript Essentials</h6>
-        <p className="flex text-sm text-gray-200">
-          Dive into TypeScript for enhanced type safety and scalable JavaScript applications.
-        </p>
-      </div>
-      <div className="w-full">
-        <div className="relative mb-2 w-full pt-[56%]">
-          <div className="absolute inset-0">
-            <img
-              src="https://images.pexels.com/photos/1144256/pexels-photo-1144256.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-              alt="React State Management"
-              className="h-full w-full"
-            />
-            <div className="absolute inset-x-0 bottom-0">
-              <div className="relative border-t bg-white/30 p-4 text-white backdrop-blur-sm before:absolute before:inset-0 before:bg-black/40">
-                <div className="relative z-[1]">
-                  <p className="flex justify-between">
-                    <span className="inline-block">Playlist</span>
-                    <span className="inline-block">1 videos</span>
-                  </p>
-                  <p className="text-sm text-gray-200">80K Views · 5 hours ago</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <h6 className="mb-1 font-semibold">React State Management</h6>
-        <p className="flex text-sm text-gray-200">
-          Explore various state management techniques in React applications.
-        </p>
-      </div>
-      <div className="w-full">
-        <div className="relative mb-2 w-full pt-[56%]">
-          <div className="absolute inset-0">
-            <img
-              src="https://images.pexels.com/photos/1144260/pexels-photo-1144260.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-              alt="Advanced JavaScript Techniques"
-              className="h-full w-full"
-            />
-            <div className="absolute inset-x-0 bottom-0">
-              <div className="relative border-t bg-white/30 p-4 text-white backdrop-blur-sm before:absolute before:inset-0 before:bg-black/40">
-                <div className="relative z-[1]">
-                  <p className="flex justify-between">
-                    <span className="inline-block">Playlist</span>
-                    <span className="inline-block">2 videos</span>
-                  </p>
-                  <p className="text-sm text-gray-200">110K Views · 6 hours ago</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <h6 className="mb-1 font-semibold">Advanced JavaScript Techniques</h6>
-        <p className="flex text-sm text-gray-200">
-          Delve into advanced JavaScript concepts and techniques for professional-level programming.
-        </p>
+        ))}
       </div>
     </div>
   );

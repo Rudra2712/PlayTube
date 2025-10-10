@@ -7,94 +7,117 @@ import { toast } from "react-toastify";
 const initialState = {
   loading: false,
   status: false,
-  data: null,
+  data: null,           // used for user playlists (array)
+  singlePlaylist: null, // used for getPlaylistById (object)
 };
 
-export const getPlaylistById = createAsyncThunk("playlist/getPlaylistById", async (playlistId) => {
-  try {
-    const response = await axiosInstance.get(`/playlist/${playlistId}`);
-    toast.success(response.data.message);
-    return response.data.data;
-  } catch (error) {
-    toast.error(parseErrorMessage(error.response.data));
-    console.log(err);
-  }
-});
 
-export const getUserPlaylists = createAsyncThunk("playlist/getUserPlaylists", async (userId) => {
-  try {
-    const response = await axiosInstance.get(`/playlist/users/${userId}`);
-    toast.success(response.data.message);
-    return response.data.data;
-  } catch (error) {
-    toast.error(parseErrorMessage(error.response.data));
-    console.log(err);
-  }
-});
-
-export const createPlaylist = createAsyncThunk("playlist/createPlaylist", async (data) => {
-  try {
-    const response = await axiosInstance.post(`/playlist`, data);
-    toast.success(response.data.message);
-    return response.data.data;
-  } catch (error) {
-    toast.error(parseErrorMessage(error.response.data));
-    console.log(err);
-  }
-});
-
-export const addVideoToPlaylist = createAsyncThunk(
-  "playlist/addVideoToPlaylist",
-  async (playlistId, videoId) => {
+export const getPlaylistById = createAsyncThunk(
+  "playlist/getPlaylistById", 
+  async (playlistId, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.patch(`/playlist/add/${playlistId}/${videoId}`);
+      const response = await axiosInstance.get(`/playlist/${playlistId}`);
       toast.success(response.data.message);
       return response.data.data;
     } catch (error) {
-      toast.error(parseErrorMessage(error.response.data));
-      console.log(err);
+      const msg = parseErrorMessage(error.response?.data);
+      toast.error(msg);
+      return rejectWithValue(msg);
+    }
+  }
+);
+
+export const getUserPlaylists = createAsyncThunk(
+  "playlist/getUserPlaylists",
+  async (userId, { rejectWithValue }) => {
+    try {
+      // console.log("📡 Fetching playlists for userId:", userId);
+      const response = await axiosInstance.get(`/playlist/user/${userId}`);
+      // console.log("✅ getUserPlaylists API response:", response.data);
+      return response.data.data;
+    } catch (error) {
+      const msg = parseErrorMessage(error.response?.data);
+      toast.error(msg);
+      console.error("❌ getUserPlaylists error:", msg);
+      return rejectWithValue(msg);
+    }
+  }
+);
+
+export const createPlaylist = createAsyncThunk(
+  "playlist/createPlaylist", 
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post(`/playlist`, data);
+      toast.success(response.data.message);
+      return response.data.data;
+    } catch (error) {
+      const msg = parseErrorMessage(error.response?.data);
+      toast.error(msg);
+      return rejectWithValue(msg);
+    }
+  }
+);
+
+export const addVideoToPlaylist = createAsyncThunk(
+  "playlist/addVideoToPlaylist",
+  async ({ playlistId, videoId }, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.patch(`/playlist/add/${videoId}/${playlistId}`);
+      toast.success(response.data.message);
+      return response.data.data;
+    } catch (error) {
+      const msg = parseErrorMessage(error.response?.data);
+      toast.error(msg);
+      return rejectWithValue(msg);
     }
   }
 );
 
 export const removeVideoFromPlaylist = createAsyncThunk(
   "playlist/removeVideoFromPlaylist",
-  async (playlistId, videoId) => {
+  async ({ playlistId, videoId }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.patch(`/playlist/remove/${playlistId}/${videoId}`);
+      const response = await axiosInstance.patch(`/playlist/remove/${videoId}/${playlistId}`);
       toast.success(response.data.message);
       return response.data.data;
     } catch (error) {
-      toast.error(parseErrorMessage(error.response.data));
-      console.log(err);
+      const msg = parseErrorMessage(error.response?.data);
+      toast.error(msg);
+      return rejectWithValue(msg);
     }
   }
 );
 
 export const updatePlaylist = createAsyncThunk(
   "playlist/updatePlaylist",
-  async (playlistId, data) => {
+  async ({ playlistId, data }, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.patch(`/playlist/${playlistId}`, data);
       toast.success(response.data.message);
       return response.data.data;
     } catch (error) {
-      toast.error(parseErrorMessage(error.response.data));
-      console.log(err);
+      const msg = parseErrorMessage(error.response?.data);
+      toast.error(msg);
+      return rejectWithValue(msg);
     }
   }
 );
 
-export const deletePlaylist = createAsyncThunk("playlist/deletePlaylist", async (playlistId) => {
-  try {
-    const response = await axiosInstance.delete(`/playlist/${playlistId}`);
-    toast.success(response.data.message);
-    return response.data.data;
-  } catch (error) {
-    toast.error(parseErrorMessage(error.response.data));
-    console.log(err);
+export const deletePlaylist = createAsyncThunk(
+  "playlist/deletePlaylist", 
+  async (playlistId, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.delete(`/playlist/${playlistId}`);
+      toast.success(response.data.message);
+      return response.data.data;
+    } catch (error) {
+      const msg = parseErrorMessage(error.response?.data);
+      toast.error(msg);
+      return rejectWithValue(msg);
+    }
   }
-});
+);
 
 const playlistSlice = createSlice({
   name: "playlist",
@@ -106,7 +129,7 @@ const playlistSlice = createSlice({
     });
     builder.addCase(getPlaylistById.fulfilled, (state, action) => {
       state.loading = false;
-      state.data = action.payload;
+      state.singlePlaylist = action.payload;
       state.status = true;
     });
     builder.addCase(getPlaylistById.rejected, (state) => {
@@ -190,7 +213,7 @@ const playlistSlice = createSlice({
     });
     builder.addCase(deletePlaylist.fulfilled, (state, action) => {
       state.loading = false;
-      state.data = action.payload;
+      state.data = null;
       state.status = true;
     });
     builder.addCase(deletePlaylist.rejected, (state) => {

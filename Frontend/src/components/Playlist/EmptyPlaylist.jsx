@@ -1,6 +1,47 @@
-import React from "react";
+import React, { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  createPlaylist,
+  getUserPlaylists,
+} from "../../app/Slices/playlistSlice";
+import { toast } from "react-toastify";
 
 function EmptyPlaylist() {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { channelId } = useParams(); // assuming route like /channel/:channelId/playlists
+  const { userData } = useSelector((state) => state.user);
+
+  const isOwner = userData?._id === channelId; // check if current user owns the channel
+
+  const [showModal, setShowModal] = useState(false);
+  const [playlistName, setPlaylistName] = useState("");
+  const [playlistDesc, setPlaylistDesc] = useState("");
+
+  const handleCreatePlaylist = async () => {
+    if (!playlistName.trim()) {
+      alert("Playlist title is required");
+      return;
+    }
+
+    // Dispatch create action
+    dispatch(
+      createPlaylist({
+        name: playlistName.trim(),
+        description: playlistDesc.trim(),
+      })
+    );
+
+    // Refresh playlists
+    dispatch(getUserPlaylists(userData._id));
+
+    // Close modal and reset
+    setShowModal(false);
+    setPlaylistName("");
+    setPlaylistDesc("");
+  };
+
   return (
     <div className="flex justify-center p-4">
       <div className="w-full max-w-sm text-center">
@@ -24,8 +65,61 @@ function EmptyPlaylist() {
             </span>
           </span>
         </p>
-        <h5 className="mb-2 font-semibold">No playlist created</h5>
-        <p>There are no playlist created on this channel.</p>
+
+        <h5 className="mb-2 font-semibold text-lg text-white">
+          No playlist created
+        </h5>
+        <p className="text-gray-400 mb-4">
+          There are no playlists created on this channel.
+        </p>
+
+        {isOwner && (
+          <button
+            onClick={() => setShowModal(true)}
+            className="mt-3 rounded-lg bg-[#AE7AFF] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#9b5fff]"
+          >
+            Create a Playlist
+          </button>
+        )}
+
+        {/* Modal */}
+        {showModal && (
+          <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50">
+            <div className="bg-[#1E1E1E] rounded-xl p-6 w-[90%] max-w-md shadow-lg">
+              <h2 className="text-xl font-semibold text-white mb-4">
+                Create New Playlist
+              </h2>
+              <input
+                type="text"
+                placeholder="Playlist Title"
+                value={playlistName}
+                onChange={(e) => setPlaylistName(e.target.value)}
+                className="w-full mb-3 p-2 rounded-md bg-[#2C2C2C] text-white outline-none"
+              />
+              <textarea
+                placeholder="Description (optional)"
+                value={playlistDesc}
+                onChange={(e) => setPlaylistDesc(e.target.value)}
+                className="w-full mb-4 p-2 rounded-md bg-[#2C2C2C] text-white outline-none resize-none"
+                rows="3"
+              />
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="px-4 py-2 rounded-lg bg-gray-600 text-white hover:bg-gray-500"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreatePlaylist}
+                  className="px-4 py-2 rounded-lg bg-[#AE7AFF] text-white font-semibold hover:bg-[#9b5fff]"
+                >
+                  Create
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

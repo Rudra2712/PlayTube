@@ -22,7 +22,7 @@ function AllTweets() {
 
   const handleLike = (tweetId) => {
     dispatch(toggleTweetLike(tweetId));
-    console.log("Liked tweet with ID:", tweetId);
+
   };
 
   return (

@@ -1,6 +1,9 @@
 import axios from "axios";
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { login, getCurrentUser } from "../../app/Slices/authSlice";
+import { toast } from "react-toastify";
 
 function SignUp() {
   const [username, setUsername] = useState("");
@@ -12,6 +15,7 @@ function SignUp() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   // const handleSignUp = async (e) => {
   //   e.preventDefault();
@@ -61,12 +65,21 @@ function SignUp() {
         }
       );
 
-      setMessage(
-        "Sign up successful! Please check your email to verify your account."
-      );
-      navigate("/", { replace: true });
+      // Auto-login after successful registration
+      try {
+        await dispatch(login({ username, password })).unwrap();
+        await dispatch(getCurrentUser()).unwrap();
+        toast.success("Account created and logged in successfully! 🎉");
+        navigate("/", { replace: true });
+      } catch (loginError) {
+        // If auto-login fails, still show success message and redirect to login
+        toast.success("Account created successfully! Please log in.");
+        navigate("/login", { replace: true });
+      }
     } catch (error) {
-      setMessage(error?.response?.data?.message || "Sign up failed.");
+      const errorMessage = error?.response?.data?.message || "Sign up failed.";
+      setMessage(errorMessage);
+      toast.error(errorMessage);
     }
 
     setLoading(false);

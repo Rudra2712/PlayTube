@@ -9,4 +9,22 @@ export default defineConfig({
       "/api": "http://localhost:8000/api/v1",
     },
   },
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    minify: 'esbuild',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          router: ['react-router-dom'],
+          redux: ['@reduxjs/toolkit', 'react-redux'],
+        },
+      },
+    },
+  },
+  preview: {
+    port: 3000,
+    host: true,
+  },
 });

@@ -1,3 +1,0 @@
-Replace stroke-linecap → strokeLinecap, stroke-linejoin → strokeLinejoin, stroke-width → strokeWidth.
-
-i was solving video not updating issue

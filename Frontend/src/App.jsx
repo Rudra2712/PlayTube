@@ -1,19 +1,39 @@
 import "./App.css";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { login, logout, getCurrentUser } from "./app/Slices/authSlice";
+import { getCurrentUser } from "./app/Slices/authSlice";
 import { healthCheck } from "./app/Slices/healthcheck";
 import { useDispatch, useSelector } from "react-redux";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
+import LoadingPage from "./components/Loading/LoadingPage";
+
 function App() {
   const dispatch = useDispatch();
+  const [initialLoading, setInitialLoading] = useState(true);
+  const authLoading = useSelector((state) => state.auth?.loading);
 
   useEffect(() => {
-    dispatch(healthCheck());
-    dispatch(login({ username: "yashpz", password: "12345678" }));
-    dispatch(getCurrentUser());
-  }, []);
+    const initializeApp = async () => {
+      try {
+        await dispatch(healthCheck()).unwrap();
+        await dispatch(getCurrentUser()).unwrap();
+      } catch (error) {
+        // Handle initialization errors silently
+      } finally {
+        // Show loading for at least 1.5 seconds for better UX
+        setTimeout(() => {
+          setInitialLoading(false);
+        }, 1500);
+      }
+    };
+
+    initializeApp();
+  }, [dispatch]);
+
+  if (initialLoading) {
+    return <LoadingPage message="Initializing PlayTube..." />;
+  }
 
   return (
     <>
@@ -29,7 +49,7 @@ function App() {
         draggable
         pauseOnHover
         theme="dark"
-        transition:Bounce
+        transition="Bounce"
       />
     </>
   );

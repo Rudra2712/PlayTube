@@ -1,57 +1,122 @@
-import React from "react";
+import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
-import { login } from "../../app/Slices/authSlice.js";
-import { Logo, Input, Button } from "../index.js";
+import { login, getCurrentUser } from "../../app/Slices/authSlice.js";
+import { Logo } from "../index.js";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import LoadingSpinner from "../Loading/LoadingSpinner";
 
 function Login() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const authLoading = useSelector((state) => state.auth?.loading);
 
-  const { register, handleSubmit } = useForm({
-    // defaultValues: {
-    //   username: "oney",
-    //   password: "12345678",
-    // },
-  });
+  const { register, handleSubmit, formState: { errors } } = useForm();
 
-  const handleLogin = (data) => {
-    dispatch(login(data)).then((res) => {
+  const handleLogin = async (data) => {
+    setIsLoading(true);
+    try {
+      await dispatch(login(data)).unwrap();
+      await dispatch(getCurrentUser()).unwrap();
+      toast.success("Welcome back! 🎉");
       navigate("/");
-    });
+    } catch (error) {
+      toast.error(error || "Login failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
   return (
-    <div className="h-screen w-full overflow-y-auto bg-[#121212] text-white">
-      <div className="mx-auto my-8 flex w-full max-w-sm flex-col px-4">
-        <div className="mx-auto inline-block w-16">
-          <Link to={"/"}>
+    <div className="min-h-screen w-full bg-[#121212] text-white flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <Link to="/" className="inline-block">
             <Logo />
           </Link>
+          <h1 className="mt-4 text-3xl font-bold text-white">Welcome Back</h1>
+          <p className="mt-2 text-gray-400">Sign in to your PlayTube account</p>
         </div>
-        <div className="mb-6 w-full text-center text-2xl font-semibold uppercase">
-          Play
-        </div>
-        <form
-          onSubmit={handleSubmit(handleLogin)}
-          className="mx-auto my-8 flex w-full max-w-sm flex-col px-4"
-        >
 
-          <Input
-            label="Username"
-            required
-            placeholder="Enter your Username"
-            {...register("username", { required: true })}
-          />
-          <Input
-            label="Password"
-            type="password"
-            required
-            placeholder="Enter the Password"
-            {...register("password", { required: true })}
-          />
-          <Button type="submit">Sign in</Button>
-        </form>
+        {/* Login Form */}
+        <div className="bg-gray-900 p-8 rounded-2xl shadow-xl border border-gray-800">
+          <form onSubmit={handleSubmit(handleLogin)} className="space-y-6">
+            {/* Username */}
+            <div>
+              <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-2">
+                Username
+              </label>
+              <input
+                id="username"
+                type="text"
+                placeholder="Enter your username"
+                className={`w-full px-4 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#ae7aff] focus:border-transparent transition-colors ${
+                  errors.username ? 'border-red-500' : 'border-gray-700'
+                }`}
+                {...register("username", { 
+                  required: "Username is required",
+                  minLength: { value: 3, message: "Username must be at least 3 characters" }
+                })}
+              />
+              {errors.username && (
+                <p className="mt-1 text-sm text-red-400">{errors.username.message}</p>
+              )}
+            </div>
+
+            {/* Password */}
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                className={`w-full px-4 py-3 bg-gray-800 border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#ae7aff] focus:border-transparent transition-colors ${
+                  errors.password ? 'border-red-500' : 'border-gray-700'
+                }`}
+                {...register("password", { 
+                  required: "Password is required",
+                  // minLength: { value: 6, message: "Password must be at least 6 characters" }
+                })}
+              />
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-400">{errors.password.message}</p>
+              )}
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isLoading || authLoading}
+              className="w-full bg-gradient-to-r from-[#ae7aff] to-purple-500 text-black font-semibold py-3 px-4 rounded-lg hover:from-[#9c6ae6] hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-[#ae7aff] focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            >
+              {isLoading || authLoading ? (
+                <>
+                  <LoadingSpinner size="sm" className="mr-2" />
+                  Signing in...
+                </>
+              ) : (
+                'Sign In'
+              )}
+            </button>
+          </form>
+
+          {/* Sign Up Link */}
+          <div className="mt-6 text-center">
+            <p className="text-gray-400">
+              Don't have an account?{' '}
+              <Link 
+                to="/signup" 
+                className="text-[#ae7aff] hover:text-[#9c6ae6] font-medium transition-colors"
+              >
+                Sign up here
+              </Link>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

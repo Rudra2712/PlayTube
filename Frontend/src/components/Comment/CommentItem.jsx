@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateComment, deleteComment } from '../../app/Slices/commentSlice';
-import { Edit2, Trash2, MoreVertical, Check, X } from 'lucide-react';
+import { updateComment, deleteComment, toggleCommentLike } from '../../app/Slices/commentSlice';
+import { Edit2, Trash2, MoreVertical, Check, X, Heart } from 'lucide-react';
 
 const CommentItem = ({ comment }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -11,12 +11,13 @@ const CommentItem = ({ comment }) => {
   const dispatch = useDispatch();
 
   // Safe destructuring from Redux
-  const { updating = {}, deleting = {} } = useSelector((state) => state.comments) || {};
+  const { updating = {}, deleting = {}, liking = {} } = useSelector((state) => state.comments) || {};
   const { userData: user } = useSelector((state) => state.auth) || {};
 
   const isOwner = user?._id && comment?.owner?._id && user._id === comment.owner._id;
   const isUpdating = !!updating[comment._id];
   const isDeleting = !!deleting[comment._id];
+  const isLiking = !!liking[comment._id];
 
   const handleEdit = async () => {
     if (!editContent.trim()) return;
@@ -40,6 +41,15 @@ const CommentItem = ({ comment }) => {
   const handleCancelEdit = () => {
     setEditContent(comment.content);
     setIsEditing(false);
+  };
+
+  const handleLike = async () => {
+    if (!user) return;
+    try {
+      await dispatch(toggleCommentLike(comment._id)).unwrap();
+    } catch (error) {
+      console.error('Failed to toggle comment like:', error);
+    }
   };
 
   const formatDate = (dateString) => {
@@ -104,7 +114,28 @@ const CommentItem = ({ comment }) => {
             </div>
           </div>
         ) : (
-          <div className="text-gray-200 whitespace-pre-wrap break-words">{comment.content}</div>
+          <>
+            <div className="text-gray-200 whitespace-pre-wrap break-words">{comment.content}</div>
+            
+            {/* Like button */}
+            <div className="flex items-center gap-4 mt-2">
+              <button
+                onClick={handleLike}
+                disabled={isLiking || !user}
+                className={`flex items-center gap-1 text-sm transition-colors ${
+                  comment.isLiked 
+                    ? 'text-red-500 hover:text-red-400' 
+                    : 'text-gray-400 hover:text-red-500'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                <Heart 
+                  size={16} 
+                  className={comment.isLiked ? 'fill-current' : ''} 
+                />
+                <span>{comment.likesCount || 0}</span>
+              </button>
+            </div>
+          </>
         )}
       </div>
 

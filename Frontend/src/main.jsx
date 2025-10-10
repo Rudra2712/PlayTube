@@ -1,4 +1,3 @@
-import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import axios from "axios";
@@ -45,6 +44,8 @@ import LikedVideos from "./pages/LikedVideos.jsx";
 import Subscribers from "./pages/Subscribers.jsx";
 import AllTweets from "./pages/AllTweets.jsx";
 import Support from "./components/Support.jsx";
+import SearchResults from "./pages/SearchResults.jsx";
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<App />}>
@@ -77,9 +78,12 @@ const router = createBrowserRouter(
             <Route path="changepwd" element={<ChangePassword />} />
           </Route>
           // Playlists
-          <Route path="playlist/:playlistId" element={<PlaylistVideos />} >
-            <Route path="add-video" element={<AddVideoToPlaylist />} />
-          </Route>
+          <Route path="playlist/:playlistId" element={<PlaylistVideos />} />
+          <Route
+            path="add-video-to-playlist/:playlistId"
+            element={<AddVideoToPlaylist />}
+          />
+          <Route path="search" element={<SearchResults />} />
           <Route path="tweets" element={<AllTweets />} />
         </Route>
         //Video Watching
@@ -94,7 +98,9 @@ const router = createBrowserRouter(
 );
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <Provider store={store}>
-    <RouterProvider router={router} />
-  </Provider>
+  <ErrorBoundary>
+    <Provider store={store}>
+      <RouterProvider router={router} />
+    </Provider>
+  </ErrorBoundary>
 );

@@ -6,7 +6,6 @@ import {
   removeVideoFromPlaylist,
   updatePlaylist,
   deletePlaylist,
-  addVideoToPlaylist, // 🆕 ensure you have this imported
 } from "../../app/Slices/playlistSlice";
 import { toast } from "react-toastify";
 
@@ -17,16 +16,14 @@ function PlaylistVideos() {
   const { singlePlaylist: playlist, loading } = useSelector(
     (state) => state.playlist
   );
-  const currentUser = useSelector(
-    (state) => state.auth?.user || state.user?.data
-  );
+  const currentUser = useSelector((state) => state.auth?.userData);
 
-  const [isEditing, setIsEditing] = useState(false); // 🆕 default false now
+  const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [videoToRemove, setVideoToRemove] = useState(null);
-  const [addVideoId, setAddVideoId] = useState(""); // 🆕 input for adding video
+
 
   useEffect(() => {
     if (playlistId) {
@@ -93,20 +90,8 @@ function PlaylistVideos() {
     setShowDeleteModal(false);
   };
 
-  // 🆕 handle adding video
-  const handleAddVideo = async () => {
-    if (!addVideoId.trim()) {
-      toast.error("Enter a valid video ID");
-      return;
-    }
-    try {
-      await dispatch(addVideoToPlaylist({ playlistId, videoId: addVideoId })).unwrap();
-      toast.success("Video added to playlist");
-      dispatch(getPlaylistById(playlistId));
-      setAddVideoId("");
-    } catch (error) {
-      toast.error("Failed to add video");
-    }
+  const handleAddVideo = () => {
+    navigate(`/add-video-to-playlist/${playlistId}`);
   };
 
   if (loading)
@@ -173,23 +158,24 @@ function PlaylistVideos() {
             </div>
           </div>
 
-          {/* 🆕 Add Video section (only owner) */}
+          {/* Add Video Button (only owner) */}
           {isOwner && (
-            <div className="flex items-center gap-2 mb-4">
-              <input
-                type="text"
-                placeholder="Enter Video ID"
-                value={addVideoId}
-                onChange={(e) => setAddVideoId(e.target.value)}
-                className="flex-1 px-3 py-2 bg-gray-700 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                onClick={handleAddVideo}
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition"
+            <button
+              onClick={handleAddVideo}
+              className="w-full mb-4 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition flex items-center justify-center gap-2"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="w-4 h-4"
               >
-                Add
-              </button>
-            </div>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              Add Video
+            </button>
           )}
 
           {/* Playlist Name & Description */}
@@ -235,7 +221,7 @@ function PlaylistVideos() {
                   {playlist.name}
                 </h6>
 
-                {/* 🆕 Edit button */}
+                {/* Edit button */}
                 {isOwner && (
                   <button
                     onClick={() => setIsEditing(true)}
@@ -295,10 +281,14 @@ function PlaylistVideos() {
                     className="w-40 h-24 object-cover rounded-md"
                   />
                   <div>
-                    <h6 className="font-semibold text-white line-clamp-1">
+                    <h6 className="font-semibold text-white overflow-hidden whitespace-nowrap text-ellipsis">
                       {video.title}
                     </h6>
-                    <p className="text-sm text-gray-400 line-clamp-2">
+                    <p className="text-sm text-gray-400 overflow-hidden" style={{
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical'
+                    }}>
                       {video.description}
                     </p>
                     <p className="text-xs text-gray-500">
@@ -308,7 +298,7 @@ function PlaylistVideos() {
                   </div>
                 </Link>
 
-                {/* 🆕 Remove button (always visible to owner only) */}
+                {/* Remove button (owner only) */}
                 {isOwner && (
                   <button
                     onClick={() => setVideoToRemove(video._id)}

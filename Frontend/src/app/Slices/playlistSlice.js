@@ -17,7 +17,6 @@ export const getPlaylistById = createAsyncThunk(
   async (playlistId, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.get(`/playlist/${playlistId}`);
-      toast.success(response.data.message);
       return response.data.data;
     } catch (error) {
       const msg = parseErrorMessage(error.response?.data);
@@ -31,14 +30,12 @@ export const getUserPlaylists = createAsyncThunk(
   "playlist/getUserPlaylists",
   async (userId, { rejectWithValue }) => {
     try {
-      // console.log("📡 Fetching playlists for userId:", userId);
       const response = await axiosInstance.get(`/playlist/user/${userId}`);
-      // console.log("✅ getUserPlaylists API response:", response.data);
       return response.data.data;
     } catch (error) {
       const msg = parseErrorMessage(error.response?.data);
       toast.error(msg);
-      console.error("❌ getUserPlaylists error:", msg);
+
       return rejectWithValue(msg);
     }
   }
@@ -171,7 +168,7 @@ const playlistSlice = createSlice({
     });
     builder.addCase(addVideoToPlaylist.fulfilled, (state, action) => {
       state.loading = false;
-      state.data = action.payload;
+      state.singlePlaylist = action.payload;
       state.status = true;
     });
     builder.addCase(addVideoToPlaylist.rejected, (state) => {
@@ -185,7 +182,7 @@ const playlistSlice = createSlice({
     });
     builder.addCase(removeVideoFromPlaylist.fulfilled, (state, action) => {
       state.loading = false;
-      state.data = action.payload;
+      state.singlePlaylist = action.payload;
       state.status = true;
     });
     builder.addCase(removeVideoFromPlaylist.rejected, (state) => {
@@ -199,7 +196,7 @@ const playlistSlice = createSlice({
     });
     builder.addCase(updatePlaylist.fulfilled, (state, action) => {
       state.loading = false;
-      state.data = action.payload;
+      state.singlePlaylist = action.payload;
       state.status = true;
     });
     builder.addCase(updatePlaylist.rejected, (state) => {
@@ -213,7 +210,7 @@ const playlistSlice = createSlice({
     });
     builder.addCase(deletePlaylist.fulfilled, (state, action) => {
       state.loading = false;
-      state.data = null;
+      state.singlePlaylist = null;
       state.status = true;
     });
     builder.addCase(deletePlaylist.rejected, (state) => {

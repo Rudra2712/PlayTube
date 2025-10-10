@@ -1,19 +1,53 @@
-import React from "react";
+import React, { useState } from "react";
 import { Logo, LogoutBtn } from "../index";
-import { NavLink, Link } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { Link, useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { getAllVideos } from "../../app/Slices/videoSlice";
+
 function Header() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  
   let authStatus = useSelector((state) => state.auth.status);
   let avatar = useSelector((state) => state.auth.userData?.avatar);
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    setIsSearching(true);
+    try {
+      // Navigate to search results page with query parameter
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    } catch (error) {
+      // Search error handled silently
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch(e);
+    }
+  };
+
   return (
     <header className="sticky inset-x-0 top-0 z-50 w-full border-b border-white bg-[#121212] px-4">
       <nav className="mx-auto flex items-center py-2 w-full">
         <Logo />
         {/* Searchbar */}
-        <div className="relative mx-auto hidden w-full max-w-md overflow-hidden sm:block">
+        <form onSubmit={handleSearch} className="relative mx-auto hidden w-full max-w-md overflow-hidden sm:block">
           <input
-            className="w-full border bg-transparent py-1 pl-8 pr-3 placeholder-white outline-none sm:py-2"
-            placeholder="Search"
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyPress={handleKeyPress}
+            className="w-full border bg-transparent py-1 pl-8 pr-10 placeholder-white outline-none sm:py-2 text-white focus:border-[#ae7aff] transition-colors"
+            placeholder="Search videos..."
+            disabled={isSearching}
           />
           <span className="absolute left-2.5 top-1/2 inline-block -translate-y-1/2">
             <svg
@@ -23,7 +57,7 @@ function Header() {
               strokeWidth="1.5"
               stroke="currentColor"
               aria-hidden="true"
-              className=" h-4 w-4"
+              className="h-4 w-4 text-gray-400"
             >
               <path
                 strokeLinecap="round"
@@ -32,7 +66,27 @@ function Header() {
               ></path>
             </svg>
           </span>
-        </div>
+          <button
+            type="submit"
+            disabled={!searchQuery.trim() || isSearching}
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {isSearching ? (
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="2"
+                stroke="currentColor"
+                className="w-4 h-4"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            )}
+          </button>
+        </form>
         {/* dont know */}
         <button className="ml-auto sm:hidden">
           <svg

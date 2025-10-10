@@ -16,8 +16,7 @@ function MyChannelVideos() {
     if (channelId) {
       dispatch(getAllVideos({ userId: channelId }))
         .unwrap()
-        .then((res) => console.log("Fetched videos response:", res))
-        .catch((err) => console.error("Error fetching videos:", err));
+;
     }
   }, [loggedInUser, channelId, dispatch]);
 

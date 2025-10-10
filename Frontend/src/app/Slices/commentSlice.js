@@ -67,6 +67,21 @@ export const deleteComment = createAsyncThunk(
   }
 );
 
+// Toggle comment like
+export const toggleCommentLike = createAsyncThunk(
+  "comments/toggleCommentLike",
+  async (commentId, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post(`/likes/toggle/c/${commentId}`);
+      return { commentId, ...response.data.data };
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to toggle comment like"
+      );
+    }
+  }
+);
+
 const commentSlice = createSlice({
   name: "comments",
   initialState: {
@@ -84,6 +99,7 @@ const commentSlice = createSlice({
     addError: null,
     updating: {},
     deleting: {},
+    liking: {},
     error: null,
   },
   reducers: {
@@ -108,6 +124,10 @@ const commentSlice = createSlice({
     setDeleting: (state, action) => {
       const { commentId, status } = action.payload;
       state.deleting[commentId] = status;
+    },
+    setLiking: (state, action) => {
+      const { commentId, status } = action.payload;
+      state.liking[commentId] = status;
     },
   },
   extraReducers: (builder) => {
@@ -193,10 +213,30 @@ const commentSlice = createSlice({
         const commentId = action.meta.arg;
         state.deleting[commentId] = false;
         state.error = action.payload;
+      })
+
+      // Toggle comment like
+      .addCase(toggleCommentLike.pending, (state, action) => {
+        const commentId = action.meta.arg;
+        state.liking[commentId] = true;
+      })
+      .addCase(toggleCommentLike.fulfilled, (state, action) => {
+        const { commentId, isLiked, likesCount } = action.payload;
+        const comment = state.comments.find((c) => c._id === commentId);
+        if (comment) {
+          comment.isLiked = isLiked;
+          comment.likesCount = likesCount;
+        }
+        state.liking[commentId] = false;
+      })
+      .addCase(toggleCommentLike.rejected, (state, action) => {
+        const commentId = action.meta.arg;
+        state.liking[commentId] = false;
+        state.error = action.payload;
       });
   },
 });
 
-export const { clearError, resetComments, setUpdating, setDeleting } =
+export const { clearError, resetComments, setUpdating, setDeleting, setLiking } =
   commentSlice.actions;
 export default commentSlice.reducer;

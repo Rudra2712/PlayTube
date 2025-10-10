@@ -6,14 +6,15 @@ import {
   deletePlaylist,
 } from "../../app/Slices/playlistSlice";
 import { toast } from "react-toastify";
-import MyChannelEmptyPlaylist from "./MyChannelEmptyPlaylist";
 import EmptyPlaylist from "../Playlist/EmptyPlaylist";
 function MyChannelPlaylists() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const currentUser = useSelector((state) => state.auth?.user || state.user?.data);
+  const currentUser = useSelector((state) => state.auth?.userData);
   const { data: playlists, loading } = useSelector((state) => state.playlist);
+
+
 
   // Fetch logged-in user's playlists
   useEffect(() => {
@@ -27,7 +28,7 @@ function MyChannelPlaylists() {
   };
 
   const handleAddVideo = (playlistId) => {
-    navigate(`/playlist/${playlistId}/add-video`);
+    navigate(`/add-video-to-playlist/${playlistId}`);
   };
 
   const handleDelete = async (playlistId) => {
@@ -41,9 +42,18 @@ function MyChannelPlaylists() {
   };
 
   if (loading) {
-    return <p className="text-gray-300 text-center py-10">Loading playlists...</p>;
+    return (
+      <div className="p-4">
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="w-12 h-12 border-4 border-gray-600 border-t-[#ae7aff] rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-300">Loading your playlists...</p>
+          </div>
+        </div>
+      </div>
+    );
   }
-  console.log("📂 User Playlists:", playlists);
+
   // If no playlists
   if (!Array.isArray(playlists) || playlists.length === 0) {
     return <EmptyPlaylist />;
@@ -78,10 +88,14 @@ function MyChannelPlaylists() {
 
             {/* Info */}
             <div className="p-4">
-              <h3 className="text-white font-semibold mb-1 line-clamp-1">
+              <h3 className="text-white font-semibold mb-1 overflow-hidden whitespace-nowrap text-ellipsis">
                 {pl.name}
               </h3>
-              <p className="text-gray-400 text-sm line-clamp-2">
+              <p className="text-gray-400 text-sm overflow-hidden" style={{
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical'
+              }}>
                 {pl.description || "No description available"}
               </p>
             </div>

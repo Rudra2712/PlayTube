@@ -8,11 +8,13 @@ import {
   getAllVideos,
   deleteVideo,
   updateVideo,
-  togglePublish, // Make sure this is imported
-  setVideos, // Import the setVideos action
+  togglePublish,
+  setVideos,
 } from "../../app/Slices/videoSlice";
 import { axiosInstance } from "../../helpers/axios.helper";
 import { toast } from "react-toastify";
+import ComponentLoader from "../Loading/ComponentLoader";
+import LoadingSpinner from "../Loading/LoadingSpinner";
 
 function Dashboard() {
   const dispatch = useDispatch();
@@ -216,8 +218,8 @@ function Dashboard() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="6" className="px-4 py-6 text-center text-gray-400">
-                  Loading videos...
+                <td colSpan="6" className="px-4 py-12">
+                  <ComponentLoader message="Loading your videos..." />
                 </td>
               </tr>
             ) : videos.length === 0 ? (

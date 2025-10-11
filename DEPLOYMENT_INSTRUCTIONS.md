@@ -2,7 +2,7 @@
 
 ## 🚀 Deployed URLs
 - **Frontend**: https://play-tube-frontend-tau.vercel.app/
-- **Backend**: https://play-tube-backend-flax.vercel.app/
+- **Backend**: https://playtube-bf9m.onrender.com/
 
 ## ✅ Configuration Changes Made
 
@@ -33,7 +33,7 @@
 
 ### Frontend (.env)
 ```
-VITE_API_BASE_URL=https://play-tube-backend-flax.vercel.app/api/v1
+VITE_API_BASE_URL=https://playtube-bf9m.onrender.com/api/v1
 ```
 
 ### Backend (.env)
@@ -57,13 +57,15 @@ CLOUDINARY_API_SECRET=d20WkM0H6-3SPYsx5cviW7K4czs
 2. Set the build command: `npm run build`
 3. Set the output directory: `dist`
 4. Add environment variables in Vercel dashboard:
-   - `VITE_API_BASE_URL=https://play-tube-backend-flax.vercel.app/api/v1`
+   - `VITE_API_BASE_URL=https://playtube-bf9m.onrender.com/api/v1`
 
-### For Backend (Vercel)
-1. Connect your GitHub repository to Vercel
-2. Set the build command: `npm install`
-3. Add all environment variables in Vercel dashboard
-4. Ensure the start script points to your main file
+### For Backend (Render)
+1. Connect your GitHub repository to Render
+2. Create a new Web Service
+3. Set the build command: `npm install`
+4. Set the start command: `npm start`
+5. Add all environment variables in Render dashboard
+6. Render will automatically assign a port (usually 10000)
 
 ## 🔍 Testing Checklist
 - [ ] Frontend loads correctly
@@ -75,8 +77,8 @@ CLOUDINARY_API_SECRET=d20WkM0H6-3SPYsx5cviW7K4czs
 
 ## 🚨 Important Notes
 1. **CORS**: Make sure both domains are correctly configured
-2. **Environment Variables**: Ensure all env vars are set in Vercel dashboard
-3. **Database**: MongoDB connection should work from Vercel
+2. **Environment Variables**: Ensure all env vars are set in Render dashboard
+3. **Database**: MongoDB connection should work from Render
 4. **Cloudinary**: File uploads should work with provided credentials
 5. **Authentication**: Cookies should work across domains
 
@@ -84,6 +86,6 @@ CLOUDINARY_API_SECRET=d20WkM0H6-3SPYsx5cviW7K4czs
 - If CORS errors occur, check the CORS_ORIGIN in backend
 - If API calls fail, verify VITE_API_BASE_URL in frontend
 - If authentication fails, check cookie settings and CORS credentials
-- If builds fail, check environment variables in Vercel dashboard
+- If builds fail, check environment variables in Render dashboard
 
 Your PlayTube application is now configured for production deployment! 🎉

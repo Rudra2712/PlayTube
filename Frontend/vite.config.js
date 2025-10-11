@@ -9,6 +9,9 @@ export default defineConfig({
       "/api": "http://localhost:8000/api/v1",
     },
   },
+  define: {
+    'process.env': {}
+  },
   build: {
     outDir: 'dist',
     sourcemap: false,

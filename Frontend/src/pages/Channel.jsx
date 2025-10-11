@@ -25,7 +25,7 @@ const Channel = () => {
       try {
         setLoading(true);
         const res = await axios.get(
-          `http://localhost:8000/api/v1/users/c/${username}`
+          `/users/c/${username}`
         );
         // console.log("Fetched channel user data:", res.data.data);
         setChannelUser(res.data.data); // adjust based on your API response shape

@@ -57,7 +57,7 @@ function SignUp() {
       if (cover) form.append("coverImage", cover); // Optional
 
       const res = await axios.post(
-        "http://localhost:8000/api/v1/users/register",
+        "/users/register",
         form,
         {
           headers: { "Content-Type": "multipart/form-data" },

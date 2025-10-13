@@ -5,7 +5,7 @@ import {
   getUserPlaylists,
   deletePlaylist,
 } from "../../app/Slices/playlistSlice";
-import { toast } from "react-toastify";
+import toast from "../../utils/toast";
 import EmptyPlaylist from "../Playlist/EmptyPlaylist";
 function MyChannelPlaylists() {
   const navigate = useNavigate();

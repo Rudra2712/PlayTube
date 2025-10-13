@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { login, getCurrentUser } from "../../app/Slices/authSlice.js";
 import { Logo } from "../index.js";
 import { Link, useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
+import toast from "../../utils/toast";
 import LoadingSpinner from "../Loading/LoadingSpinner";
 
 function Login() {

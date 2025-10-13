@@ -14,21 +14,20 @@ const initialState = {
 export const login = createAsyncThunk("auth/login", async (data) => {
   try {
     const response = await axiosInstance.post("/users/login", data);
-    toast.success(response.data.message + " 🤩");
+    // Don't show toast here, let the component handle it
     return response.data.data.user;
   } catch (error) {
-    toast.error(parseErrorMessage(error.response.data));
-    console.log(error);
+    // Don't show toast here, let the component handle it
+    throw new Error(parseErrorMessage(error.response.data));
   }
 });
 
 export const logout = createAsyncThunk("auth/logout", async () => {
   try {
     await axiosInstance.post("/users/logout");
-    toast.success("Logged out successfully...");
+    // Don't show toast here, let the component handle it
   } catch (error) {
-    toast.error(parseErrorMessage(error.response.data));
-    console.log(error);
+    throw new Error(parseErrorMessage(error.response.data));
   }
 });
 

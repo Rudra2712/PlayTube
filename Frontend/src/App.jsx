@@ -5,13 +5,20 @@ import { getCurrentUser } from "./app/Slices/authSlice";
 import { healthCheck } from "./app/Slices/healthcheck";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import LoadingPage from "./components/Loading/LoadingPage";
+import { clearToastsOnRouteChange } from "./utils/toast";
 
 function App() {
   const dispatch = useDispatch();
+  const location = useLocation();
   const [initialLoading, setInitialLoading] = useState(true);
   const authLoading = useSelector((state) => state.auth?.loading);
+
+  // Clear toasts on route change
+  useEffect(() => {
+    clearToastsOnRouteChange();
+  }, [location.pathname]);
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -40,16 +47,18 @@ function App() {
       <Outlet />
       <ToastContainer
         position="bottom-right"
-        autoClose={4000}
+        autoClose={3000}
         hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
+        newestOnTop={true}
+        closeOnClick={true}
         rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
+        pauseOnFocusLoss={false}
+        draggable={true}
+        pauseOnHover={true}
         theme="dark"
-        transition="Bounce"
+        limit={3}
+        toastClassName="custom-toast"
+        bodyClassName="custom-toast-body"
       />
     </>
   );

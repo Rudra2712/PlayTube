@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { login, getCurrentUser } from "../../app/Slices/authSlice";
-import { toast } from "react-toastify";
+import toast from "../../utils/toast";
 
 function SignUp() {
   const [username, setUsername] = useState("");

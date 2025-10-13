@@ -7,7 +7,7 @@ import {
   updatePlaylist,
   deletePlaylist,
 } from "../../app/Slices/playlistSlice";
-import { toast } from "react-toastify";
+import toast from "../../utils/toast";
 
 function PlaylistVideos() {
   const { playlistId } = useParams();

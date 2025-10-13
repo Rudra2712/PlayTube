@@ -153,6 +153,8 @@ const loginUser = asyncHandler(async (req, res) => {
   const options = {
     httpOnly: true, // cookie cannot be accessed by client-side scripts
     secure: true,
+    sameSite: "none", // Allow cross-site cookie between Render & Vercel
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   };
 
   return res
